@@ -10,13 +10,13 @@ const AdminLayout = ({ children }) => {
   };
 
   const links = [
-    { name: "Dashboard", href: "#" },
-    { name: "Stores", href: "#" },
-    { name: "Menu", href: "#" },
-    { name: "Combos", href: "#" },
-    { name: "Orders", href: "#" },
-    { name: "Users", href: "#" },
-    { name: "Settings", href: "#" },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Stores", href: "/stores" },
+    { name: "Menu", href: "/menus" },
+    { name: "Combos", href: "/combos" },
+    { name: "Orders", href: "/orders" },
+    { name: "Users", href: "/users" },
+    { name: "Settings", href: "/settings" },
   ];
 
   return (
