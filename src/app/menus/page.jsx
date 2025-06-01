@@ -11,7 +11,7 @@ export const initialMenuItems = [
     description: "Juicy beef patty with melted cheddar, lettuce, tomato, and pickles",
     category: "Burgers",
     price: 9.99,
-    image: "/images/classic-cheeseburger.jpg",
+    image: "",
     status: "Available",
     addOns: [
       { name: "Extra Cheese", price: 1.0 },
@@ -30,7 +30,6 @@ const menuValidationSchema = Yup.object().shape({
   category: Yup.string().required("Category is required"),
   price: Yup.number().required("Price is required").positive(),
   status: Yup.string().required(),
-  image: Yup.string().url("Must be a valid URL"),
   addOns: Yup.array().of(
     Yup.object().shape({
       name: Yup.string().required("Addon name is required"),
@@ -49,15 +48,19 @@ const Menus = () => {
   const [menus, setMenus] = useState(initialMenuItems);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const openModal = (item = null) => {
     setCurrentItem(item);
+    setPreviewImage(item?.image || null);
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setCurrentItem(null);
     setModalOpen(false);
+    setPreviewImage(null);
   };
 
   const handleSave = (values) => {
@@ -103,7 +106,7 @@ const Menus = () => {
             </thead>
             <tbody>
               {menus.map((item) => (
-                <tr key={item.id} className="">
+                <tr key={item.id}>
                   <td className="p-3">{item.name}</td>
                   <td className="p-3">{item.category}</td>
                   <td className="p-3">${item.price}</td>
@@ -143,7 +146,7 @@ const Menus = () => {
                 validationSchema={menuValidationSchema}
                 onSubmit={handleSave}
               >
-                {({ values, errors, touched }) => (
+                {({ values, errors, touched, setFieldValue }) => (
                   <Form className="space-y-3">
                     <Field
                       name="name"
@@ -181,14 +184,35 @@ const Menus = () => {
                       <p className="text-red-500 text-xs">{errors.price}</p>
                     )}
 
-                    <Field
-                      name="image"
-                      placeholder="Image URL"
-                      className="w-full border px-3 py-2 rounded"
-                    />
-                    {errors.image && touched.image && (
-                      <p className="text-red-500 text-xs">{errors.image}</p>
-                    )}
+                    {/* Image Upload & Preview */}
+                    <div>
+                      {previewImage && (
+                        <div className="mb-2">
+                          <img
+                            src={previewImage}
+                            alt="Preview"
+                            className="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80"
+                            onClick={() => setShowImageModal(true)}
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setPreviewImage(reader.result);
+                              setFieldValue("image", reader.result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="block border px-3 py-2 rounded w-full"
+                      />
+                    </div>
 
                     <Field
                       as="select"
@@ -308,6 +332,21 @@ const Menus = () => {
                 )}
               </Formik>
             </div>
+
+            {/* Image Preview Modal */}
+            {showImageModal && (
+              <div
+                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                onClick={() => setShowImageModal(false)}
+              >
+                <img
+                  src={previewImage}
+                  alt="Large preview"
+                  className="max-w-full max-h-full rounded shadow-lg"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
