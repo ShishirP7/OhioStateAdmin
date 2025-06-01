@@ -1,63 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import AdminLayout from "../components/adminLayouts";
+import { initialMenuItems } from "../datas/menuData";
 
-export const initialMenuItems = [
-  {
-    id: 1,
-    name: "Classic Cheeseburger",
-    description: "Juicy beef patty with melted cheddar, lettuce, tomato, and pickles",
-    category: "Burgers",
-    price: 9.99,
-    image: "",
-    status: "Available",
-    addOns: [
-      { name: "Extra Cheese", price: 1.0 },
-      { name: "Bacon", price: 1.5 },
-    ],
-    sizes: [
-      { label: "Single", priceModifier: 0 },
-      { label: "Double", priceModifier: 2 },
-    ],
-  },
-  {
-    id: 2,
-    name: "Margherita Pizza",
-    description: "Classic pizza with fresh mozzarella, tomatoes, basil, and olive oil",
-    category: "Pizzas",
-    price: 12.99,
-    image: "",
-    status: "Available",
-    addOns: [],
-    sizes: [
-      { label: "Small", priceModifier: 0 },
-      { label: "Medium", priceModifier: 2 },
-      { label: "Large", priceModifier: 4 },
-    ],
-  },
-  {
-    id: 3,
-    name: "French Fries",
-    description: "Crispy golden fries",
-    category: "Sides",
-    price: 3.99,
-    image: "",
-    status: "Available",
-    addOns: [],
-    sizes: [],
-  },
-  {
-    id: 4,
-    name: "Cola",
-    description: "Refreshing cold drink",
-    category: "Drinks",
-    price: 2.5,
-    image: "",
-    status: "Available",
-    addOns: [],
-    sizes: [],
-  },
-];
 
 const Combos = () => {
   const [combos, setCombos] = useState([]);
@@ -124,7 +69,7 @@ const Combos = () => {
         </div>
 
         {/* Combo list */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {combos.map((combo) => (
             <div key={combo.id} className="bg-white p-4 rounded shadow">
               {combo.image && (

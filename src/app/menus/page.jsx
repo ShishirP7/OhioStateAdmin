@@ -3,26 +3,9 @@ import React, { useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import { Formik, Form, Field, FieldArray } from "formik";
 import * as Yup from "yup";
+import { initialMenuItems } from "../datas/menuData";
 
-export const initialMenuItems = [
-  {
-    id: 1,
-    name: "Classic Cheeseburger",
-    description: "Juicy beef patty with melted cheddar, lettuce, tomato, and pickles",
-    category: "Burgers",
-    price: 9.99,
-    image: "",
-    status: "Available",
-    addOns: [
-      { name: "Extra Cheese", price: 1.0 },
-      { name: "Bacon", price: 1.5 },
-    ],
-    sizes: [
-      { label: "Single", priceModifier: 0 },
-      { label: "Double", priceModifier: 2 },
-    ],
-  },
-];
+
 
 const menuValidationSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
