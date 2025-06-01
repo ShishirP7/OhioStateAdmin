@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,13 +33,13 @@ const AdminLayout = ({ children }) => {
         </div>
         <nav className="flex flex-col mt-4 space-y-2 px-4">
           {links.map((link, idx) => (
-            <a
+            <Link
               key={idx}
               href={link.href}
               className="p-2 rounded hover:bg-red-500 transition-colors"
             >
               {link.name}
-            </a>
+            </Link>
           ))}
         </nav>
       </div>
@@ -53,7 +54,11 @@ const AdminLayout = ({ children }) => {
               className="text-gray-600 lg:hidden"
               aria-label="Toggle Sidebar"
             >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {sidebarOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
             <h1 className="font-bold text-xl text-gray-800">Admin Dashboard</h1>
           </div>
