@@ -11,76 +11,7 @@ const menuValidationSchema = Yup.object().shape({
   category: Yup.string().required("Category is required"),
   price: Yup.number().required("Price is required").positive(),
   status: Yup.string().required(),
-  addOns: Yup.array().of(
-    Yup.object().shape({
-      name: Yup.string().required("Addon name is required"),
-      price: Yup.number().required("Addon price is required").min(0),
-    })
-  ),
-  sizes: Yup.array().of(
-    Yup.object().shape({
-      label: Yup.string().required("Size label is required"),
-      priceModifier: Yup.number().required("Modifier is required"),
-    })
-  ),
-  options: Yup.object().shape({
-    base: Yup.object().shape({
-      sizes: Yup.array().of(
-        Yup.object().shape({
-          label: Yup.string(),
-          priceModifier: Yup.number(),
-        })
-      ),
-      crusts: Yup.array().of(
-        Yup.object().shape({
-          label: Yup.string(),
-          priceModifier: Yup.number(),
-        })
-      ),
-      sauces: Yup.array().of(
-        Yup.object().shape({
-          label: Yup.string(),
-          priceModifier: Yup.number(),
-        })
-      ),
-    }),
-    cut: Yup.array().of(
-      Yup.object().shape({
-        label: Yup.string(),
-        priceModifier: Yup.number(),
-      })
-    ),
-    bake: Yup.array().of(
-      Yup.object().shape({
-        label: Yup.string(),
-        priceModifier: Yup.number(),
-      })
-    ),
-    cheese: Yup.array().of(
-      Yup.object().shape({
-        label: Yup.string(),
-        priceModifier: Yup.number(),
-      })
-    ),
-    meats: Yup.array().of(
-      Yup.object().shape({
-        label: Yup.string(),
-        priceModifier: Yup.number(),
-      })
-    ),
-    veggies: Yup.array().of(
-      Yup.object().shape({
-        label: Yup.string(),
-        priceModifier: Yup.number(),
-      })
-    ),
-    addExtras: Yup.array().of(
-      Yup.object().shape({
-        label: Yup.string(),
-        priceModifier: Yup.number(),
-      })
-    ),
-  }),
+  options: Yup.object(),
 });
 
 const NestedOptionFieldArray = ({ name, label }) => (
@@ -112,7 +43,7 @@ const NestedOptionFieldArray = ({ name, label }) => (
             <Field
               name={`${name}[${index}].priceModifier`}
               type="number"
-              placeholder="Modifier"
+              placeholder="Price"
               className="w-24 border px-2 py-1 rounded"
             />
             <button
@@ -128,6 +59,27 @@ const NestedOptionFieldArray = ({ name, label }) => (
     </FieldArray>
   </div>
 );
+
+// Helper to decide which nested option fields to show based on category
+const getFieldsForCategory = (category) => {
+  const common = ["sizes", "addOns"];
+  const pizza = ["base.sizes", "base.crusts", "base.sauces", "cut", "bake", "cheese", "meats", "veggies", "extras"];
+  const drinks = ["sizes", "flavors"];
+  const sides = ["sizes", "dips"];
+  const burgers = ["sizes", "addOns", "sauces"];
+  switch (category) {
+    case "Pizzas":
+      return pizza;
+    case "Drinks":
+      return drinks;
+    case "Sides":
+      return sides;
+    case "Burgers":
+      return burgers;
+    default:
+      return common;
+  }
+};
 
 const Menus = () => {
   const [menus, setMenus] = useState(menuItems);
@@ -149,11 +101,7 @@ const Menus = () => {
   };
 
   const handleSave = (values) => {
-    const updatedItem = {
-      ...values,
-      id: currentItem?.id || Date.now(),
-    };
-
+    const updatedItem = { ...values, id: currentItem?.id || Date.now() };
     if (currentItem) {
       setMenus((prev) =>
         prev.map((item) => (item.id === currentItem.id ? updatedItem : item))
@@ -161,7 +109,6 @@ const Menus = () => {
     } else {
       setMenus((prev) => [...prev, updatedItem]);
     }
-
     closeModal();
   };
 
@@ -224,48 +171,35 @@ const Menus = () => {
                   price: currentItem?.price || "",
                   status: currentItem?.status || "Available",
                   image: currentItem?.image || "",
-                  addOns: currentItem?.addOns || [],
-                  sizes: currentItem?.sizes || [],
-                  options: currentItem?.options || {
-                    base: { sizes: [], crusts: [], sauces: [] },
-                    cut: [],
-                    bake: [],
-                    cheese: [],
-                    meats: [],
-                    veggies: [],
-                    addExtras: [],
-                  },
+                  options: currentItem?.options || {},
                 }}
                 validationSchema={menuValidationSchema}
                 onSubmit={handleSave}
               >
-                {({ setFieldValue, errors, touched }) => (
+                {({ values, setFieldValue, errors, touched }) => (
                   <Form className="space-y-3">
                     <Field
                       name="name"
                       placeholder="Name"
                       className="w-full border px-3 py-2 rounded"
                     />
-                    {errors.name && touched.name && (
-                      <p className="text-red-500 text-xs">{errors.name}</p>
-                    )}
-
                     <Field
                       as="textarea"
                       name="description"
                       placeholder="Description"
                       className="w-full border px-3 py-2 rounded"
                     />
-
                     <Field
                       name="category"
-                      placeholder="Category"
+                      as="select"
                       className="w-full border px-3 py-2 rounded"
-                    />
-                    {errors.category && touched.category && (
-                      <p className="text-red-500 text-xs">{errors.category}</p>
-                    )}
-
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Pizzas">Pizzas</option>
+                      <option value="Burgers">Burgers</option>
+                      <option value="Drinks">Drinks</option>
+                      <option value="Sides">Sides</option>
+                    </Field>
                     <Field
                       name="price"
                       type="number"
@@ -273,39 +207,32 @@ const Menus = () => {
                       placeholder="Price"
                       className="w-full border px-3 py-2 rounded"
                     />
-                    {errors.price && touched.price && (
-                      <p className="text-red-500 text-xs">{errors.price}</p>
+                    {previewImage && (
+                      <div className="mb-2">
+                        <img
+                          src={previewImage}
+                          alt="Preview"
+                          className="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80"
+                          onClick={() => setShowImageModal(true)}
+                        />
+                      </div>
                     )}
-
-                    <div>
-                      {previewImage && (
-                        <div className="mb-2">
-                          <img
-                            src={previewImage}
-                            alt="Preview"
-                            className="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80"
-                            onClick={() => setShowImageModal(true)}
-                          />
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setPreviewImage(reader.result);
-                              setFieldValue("image", reader.result);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        className="block border px-3 py-2 rounded w-full"
-                      />
-                    </div>
-
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPreviewImage(reader.result);
+                            setFieldValue("image", reader.result);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="block border px-3 py-2 rounded w-full"
+                    />
                     <Field
                       as="select"
                       name="status"
@@ -315,41 +242,16 @@ const Menus = () => {
                       <option value="Out of Stock">Out of Stock</option>
                     </Field>
 
-                    <NestedOptionFieldArray name="addOns" label="Add-ons" />
-                    <NestedOptionFieldArray name="sizes" label="Sizes" />
-
+                    {/* Conditionally render nested option fields */}
                     <div className="mt-4 border-t pt-2">
-                      <h3 className="text-lg font-bold">Complex Options</h3>
-                      <NestedOptionFieldArray
-                        name="options.base.sizes"
-                        label="Pizza Sizes"
-                      />
-                      <NestedOptionFieldArray
-                        name="options.base.crusts"
-                        label="Crusts"
-                      />
-                      <NestedOptionFieldArray
-                        name="options.base.sauces"
-                        label="Sauces"
-                      />
-                      <NestedOptionFieldArray name="options.cut" label="Cut" />
-                      <NestedOptionFieldArray name="options.bake" label="Bake" />
-                      <NestedOptionFieldArray
-                        name="options.cheese"
-                        label="Cheese"
-                      />
-                      <NestedOptionFieldArray
-                        name="options.meats"
-                        label="Meats"
-                      />
-                      <NestedOptionFieldArray
-                        name="options.veggies"
-                        label="Veggies"
-                      />
-                      <NestedOptionFieldArray
-                        name="options.addExtras"
-                        label="Add Extras"
-                      />
+                      <h3 className="text-lg font-bold">Options</h3>
+                      {getFieldsForCategory(values.category).map((opt) => (
+                        <NestedOptionFieldArray
+                          key={opt}
+                          name={`options.${opt}`}
+                          label={opt.split(".").pop()}
+                        />
+                      ))}
                     </div>
 
                     <div className="flex justify-end gap-2">
