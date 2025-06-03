@@ -1,8 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import AdminLayout from "../components/adminLayouts";
-import { initialMenuItems } from "../datas/menuData";
-
+import { menuItems } from "../datas/menuData";
 
 const Combos = () => {
   const [combos, setCombos] = useState([]);
@@ -39,9 +38,9 @@ const Combos = () => {
       description: formData.get("description"),
       price: parseFloat(formData.get("price")),
       image: previewImage || "",
-      items: items.map((itemId) => {
-        return initialMenuItems.find((m) => m.id === parseInt(itemId));
-      }),
+      items: items.map((itemId) =>
+        menuItems.find((m) => m.id === parseInt(itemId))
+      ),
     };
 
     if (currentCombo) {
@@ -69,7 +68,7 @@ const Combos = () => {
         </div>
 
         {/* Combo list */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {combos.map((combo) => (
             <div key={combo.id} className="bg-white p-4 rounded shadow">
               {combo.image && (
@@ -84,7 +83,10 @@ const Combos = () => {
                 {combo.description}
               </p>
               <p className="text-sm text-gray-600">
-                Items: {combo.items.map((item) => item.name).join(", ")}
+                Items:{" "}
+                {combo.items.length > 0
+                  ? combo.items.map((item) => item.name).join(", ")
+                  : "None"}
               </p>
               <p className="text-sm text-gray-800 font-semibold">
                 Price: ${combo.price}
@@ -144,7 +146,7 @@ const Combos = () => {
                   className="w-full border px-3 py-2 rounded"
                 >
                   <option value="">Select Item {num} (optional)</option>
-                  {initialMenuItems.map((item) => (
+                  {menuItems.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name} (${item.price}) - {item.category}
                     </option>

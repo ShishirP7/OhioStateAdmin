@@ -1,11 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import AdminLayout from "../components/adminLayouts";
-import { Formik, Form, Field, FieldArray } from "formik";
+import { Formik, Form, Field, FieldArray, getIn } from "formik";
 import * as Yup from "yup";
-import { initialMenuItems } from "../datas/menuData";
-
-
+import { menuItems } from "../datas/menuData";
 
 const menuValidationSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -22,13 +20,117 @@ const menuValidationSchema = Yup.object().shape({
   sizes: Yup.array().of(
     Yup.object().shape({
       label: Yup.string().required("Size label is required"),
-      priceModifier: Yup.number().required("Modifier is required").min(0),
+      priceModifier: Yup.number().required("Modifier is required"),
     })
   ),
+  options: Yup.object().shape({
+    base: Yup.object().shape({
+      sizes: Yup.array().of(
+        Yup.object().shape({
+          label: Yup.string(),
+          priceModifier: Yup.number(),
+        })
+      ),
+      crusts: Yup.array().of(
+        Yup.object().shape({
+          label: Yup.string(),
+          priceModifier: Yup.number(),
+        })
+      ),
+      sauces: Yup.array().of(
+        Yup.object().shape({
+          label: Yup.string(),
+          priceModifier: Yup.number(),
+        })
+      ),
+    }),
+    cut: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string(),
+        priceModifier: Yup.number(),
+      })
+    ),
+    bake: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string(),
+        priceModifier: Yup.number(),
+      })
+    ),
+    cheese: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string(),
+        priceModifier: Yup.number(),
+      })
+    ),
+    meats: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string(),
+        priceModifier: Yup.number(),
+      })
+    ),
+    veggies: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string(),
+        priceModifier: Yup.number(),
+      })
+    ),
+    addExtras: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string(),
+        priceModifier: Yup.number(),
+      })
+    ),
+  }),
 });
 
+const NestedOptionFieldArray = ({ name, label }) => (
+  <div>
+    <div className="flex justify-between items-center mb-1">
+      <h4 className="font-semibold">{label}</h4>
+      <FieldArray name={name}>
+        {({ push }) => (
+          <button
+            type="button"
+            onClick={() => push({ label: "", priceModifier: 0 })}
+            className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+          >
+            + Add
+          </button>
+        )}
+      </FieldArray>
+    </div>
+    <FieldArray name={name}>
+      {({ remove, form }) => {
+        const items = getIn(form.values, name) || [];
+        return items.map((opt, index) => (
+          <div key={index} className="flex gap-2 mb-1">
+            <Field
+              name={`${name}[${index}].label`}
+              placeholder="Label"
+              className="flex-1 border px-2 py-1 rounded"
+            />
+            <Field
+              name={`${name}[${index}].priceModifier`}
+              type="number"
+              placeholder="Modifier"
+              className="w-24 border px-2 py-1 rounded"
+            />
+            <button
+              type="button"
+              onClick={() => remove(index)}
+              className="text-red-500"
+            >
+              ✕
+            </button>
+          </div>
+        ));
+      }}
+    </FieldArray>
+  </div>
+);
+
 const Menus = () => {
-  const [menus, setMenus] = useState(initialMenuItems);
+  const [menus, setMenus] = useState(menuItems);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
@@ -108,10 +210,9 @@ const Menus = () => {
           </table>
         </div>
 
-        {/* Modal */}
         {modalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-[500px] shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 w-[600px] shadow-lg max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg font-bold mb-4">
                 {currentItem ? "Edit Item" : "Add New Item"}
               </h2>
@@ -125,11 +226,20 @@ const Menus = () => {
                   image: currentItem?.image || "",
                   addOns: currentItem?.addOns || [],
                   sizes: currentItem?.sizes || [],
+                  options: currentItem?.options || {
+                    base: { sizes: [], crusts: [], sauces: [] },
+                    cut: [],
+                    bake: [],
+                    cheese: [],
+                    meats: [],
+                    veggies: [],
+                    addExtras: [],
+                  },
                 }}
                 validationSchema={menuValidationSchema}
                 onSubmit={handleSave}
               >
-                {({ values, errors, touched, setFieldValue }) => (
+                {({ setFieldValue, errors, touched }) => (
                   <Form className="space-y-3">
                     <Field
                       name="name"
@@ -167,7 +277,6 @@ const Menus = () => {
                       <p className="text-red-500 text-xs">{errors.price}</p>
                     )}
 
-                    {/* Image Upload & Preview */}
                     <div>
                       {previewImage && (
                         <div className="mb-2">
@@ -206,94 +315,41 @@ const Menus = () => {
                       <option value="Out of Stock">Out of Stock</option>
                     </Field>
 
-                    {/* Add-ons */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <h4 className="font-semibold">Add-ons</h4>
-                        <FieldArray name="addOns">
-                          {({ push }) => (
-                            <button
-                              type="button"
-                              onClick={() => push({ name: "", price: 0 })}
-                              className="bg-green-500 text-white px-2 py-1 rounded text-xs"
-                            >
-                              + Add
-                            </button>
-                          )}
-                        </FieldArray>
-                      </div>
-                      <FieldArray name="addOns">
-                        {({ remove, form }) =>
-                          form.values.addOns.map((addon, index) => (
-                            <div key={index} className="flex gap-2 mb-1">
-                              <Field
-                                name={`addOns[${index}].name`}
-                                placeholder="Name"
-                                className="flex-1 border px-2 py-1 rounded"
-                              />
-                              <Field
-                                name={`addOns[${index}].price`}
-                                type="number"
-                                step="0.01"
-                                placeholder="Price"
-                                className="w-20 border px-2 py-1 rounded"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => remove(index)}
-                                className="text-red-500"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ))
-                        }
-                      </FieldArray>
-                    </div>
+                    <NestedOptionFieldArray name="addOns" label="Add-ons" />
+                    <NestedOptionFieldArray name="sizes" label="Sizes" />
 
-                    {/* Sizes */}
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <h4 className="font-semibold">Sizes</h4>
-                        <FieldArray name="sizes">
-                          {({ push }) => (
-                            <button
-                              type="button"
-                              onClick={() => push({ label: "", priceModifier: 0 })}
-                              className="bg-green-500 text-white px-2 py-1 rounded text-xs"
-                            >
-                              + Add
-                            </button>
-                          )}
-                        </FieldArray>
-                      </div>
-                      <FieldArray name="sizes">
-                        {({ remove, form }) =>
-                          form.values.sizes.map((size, index) => (
-                            <div key={index} className="flex gap-2 mb-1">
-                              <Field
-                                name={`sizes[${index}].label`}
-                                placeholder="Label"
-                                className="flex-1 border px-2 py-1 rounded"
-                              />
-                              <Field
-                                name={`sizes[${index}].priceModifier`}
-                                type="number"
-                                step="0.01"
-                                placeholder="Modifier"
-                                className="w-24 border px-2 py-1 rounded"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => remove(index)}
-                                className="text-red-500"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ))
-                        }
-                      </FieldArray>
+                    <div className="mt-4 border-t pt-2">
+                      <h3 className="text-lg font-bold">Complex Options</h3>
+                      <NestedOptionFieldArray
+                        name="options.base.sizes"
+                        label="Pizza Sizes"
+                      />
+                      <NestedOptionFieldArray
+                        name="options.base.crusts"
+                        label="Crusts"
+                      />
+                      <NestedOptionFieldArray
+                        name="options.base.sauces"
+                        label="Sauces"
+                      />
+                      <NestedOptionFieldArray name="options.cut" label="Cut" />
+                      <NestedOptionFieldArray name="options.bake" label="Bake" />
+                      <NestedOptionFieldArray
+                        name="options.cheese"
+                        label="Cheese"
+                      />
+                      <NestedOptionFieldArray
+                        name="options.meats"
+                        label="Meats"
+                      />
+                      <NestedOptionFieldArray
+                        name="options.veggies"
+                        label="Veggies"
+                      />
+                      <NestedOptionFieldArray
+                        name="options.addExtras"
+                        label="Add Extras"
+                      />
                     </div>
 
                     <div className="flex justify-end gap-2">
@@ -316,7 +372,6 @@ const Menus = () => {
               </Formik>
             </div>
 
-            {/* Image Preview Modal */}
             {showImageModal && (
               <div
                 className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
