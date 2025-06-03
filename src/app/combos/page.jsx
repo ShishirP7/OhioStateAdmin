@@ -30,7 +30,9 @@ const Combos = () => {
       formData.get("item2"),
       formData.get("item3"),
       formData.get("item4"),
-    ].filter(Boolean);
+    ]
+      .filter(Boolean)
+      .map((id) => menuItems.find((m) => m.id === parseInt(id)));
 
     const newCombo = {
       id: currentCombo?.id || Date.now(),
@@ -38,9 +40,7 @@ const Combos = () => {
       description: formData.get("description"),
       price: parseFloat(formData.get("price")),
       image: previewImage || "",
-      items: items.map((itemId) =>
-        menuItems.find((m) => m.id === parseInt(itemId))
-      ),
+      items,
     };
 
     if (currentCombo) {
@@ -67,7 +67,7 @@ const Combos = () => {
           </button>
         </div>
 
-        {/* Combo list */}
+        {/* Combos list */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {combos.map((combo) => (
             <div key={combo.id} className="bg-white p-4 rounded shadow">
@@ -89,7 +89,7 @@ const Combos = () => {
                   : "None"}
               </p>
               <p className="text-sm text-gray-800 font-semibold">
-                Price: ${combo.price}
+                Price: ${combo.price.toFixed(2)}
               </p>
               <button
                 onClick={() => openModal(combo)}
@@ -137,7 +137,7 @@ const Combos = () => {
                 required
               />
 
-              {/* Dropdowns for selecting items */}
+              {/* Dropdowns for selecting up to 4 items */}
               {[1, 2, 3, 4].map((num) => (
                 <select
                   key={num}
