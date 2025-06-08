@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import Lottie from "lottie-react";
 import OrderAnimation from "../../../Assets/Preparing.json";
 import PackagingAnimation from "../../../Assets/Packaging.json";
+import Receipt from "../components/Recipt";
 
 const pizzaOrders = [
   {
@@ -221,6 +222,91 @@ const Orders = () => {
   const [showModal, setShowModal] = useState(false);
   const [orders, setOrders] = useState(pizzaOrders); // previously static array
 
+  const [status, setStatus] = useState("Pending");
+  const [isOpen, setIsOpen] = useState(false);
+  const printRef = useRef();
+
+  const handlePrint = () => {
+    const printContents = printRef.current.innerHTML;
+
+    const win = window.open("", "", "width=380,height=600"); // 380px ≈ 80mm
+
+    win.document.write(`
+    <html>
+      <head>
+        <title>Print Receipt</title>
+        <style>
+  @media print {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 80mm;
+      font-family: monospace;
+      font-size: 12px;
+      background: #fff;
+    }
+
+    #invoice-POS {
+      width: 80mm;
+      padding: 0; /* Remove padding */
+      margin: 0 auto;
+      margin-top:-20px;
+    }
+
+    #invoice-POS #top {
+      padding-top: 0; /* Ensure no top padding */
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      background-size: contain;
+      margin: 0 auto;
+    }
+
+    h2, h3, p {
+      margin: 0;
+      padding: 2px 0;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 4px 0;
+      text-align: left;
+    }
+
+    .legal {
+      font-size: 10px;
+      margin-top: 8px;
+      text-align: center;
+    }
+  }
+</style>
+      </head>
+      <body onload="window.print(); window.close();">
+        ${printContents}
+      </body>
+    </html>
+  `);
+
+    win.document.close();
+  };
+
+  const handleChange = (newStatus) => {
+    setStatus(newStatus);
+    setIsOpen(false);
+    console.log("Status changed to:", newStatus);
+  };
+
   const handleRowClick = (order) => {
     if (order.status !== "Pending") return;
     const confirmed = window.confirm(
@@ -250,11 +336,25 @@ const Orders = () => {
     );
     setOrders(updatedOrders);
     setSelectedOrder({ ...selectedOrder, status: "Completed" }); // update modal content
-    setShowModal(false)
+    setShowModal(false);
   };
 
   const closeModal = () => {
     setShowModal(false);
+  };
+
+  const statusMessage = () => {
+    if (status === "Pending") {
+      return "New order received. Awaiting action.";
+    } else if (status === "Cooking") {
+      return "The kitchen is preparing the order.";
+    } else if (status === "Packaging") {
+      return "The order is ready and being packaged.";
+    } else if (status === "Out for Delivery") {
+      return "The order has left the restaurant for delivery.";
+    } else {
+      return "Unknown order status.";
+    }
   };
 
   return (
@@ -396,39 +496,82 @@ const Orders = () => {
             {selectedOrder.status === "Pending" ? (
               <div className="bg-white text-black rounded-lg w-[90%] max-w-xl p-6 relative shadow-lg overflow-y-auto max-h-[90vh]">
                 <div className="w-100 ">
-                  {selectedOrder.status === "Pending" && (
-                    <button
-                      onClick={markAsCompleted}
-                      className="absolute top-3 left-3 text-md font-bold bg-red-600 p-2 rounded-md text-white cursor-pointer"
-                    >
-                      Mark as completed
-                    </button>
-                  )}
+                  <div className="relative inline-block text-left">
+                    <div>
+                      <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        type="button"
+                        className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 transition duration-200"
+                        aria-expanded={isOpen}
+                        aria-haspopup="true"
+                      >
+                        {status}
+                        <svg
+                          className={`-mr-1 size-5 text-gray-400 transform transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : "rotate-0"
+                          }`}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
 
+                    {/* Dropdown Menu */}
+                    <div
+                      className={`absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200 ${
+                        isOpen
+                          ? "opacity-100 scale-100 visible"
+                          : "opacity-0 scale-95 invisible"
+                      }`}
+                      role="menu"
+                      aria-orientation="vertical"
+                    >
+                      <div className="py-1" role="none">
+                        {[
+                          "Pending",
+                          "Cooking",
+                          "Packaging",
+                          "Out for Delivery",
+                        ].map((item) => (
+                          <button
+                            key={item}
+                            onClick={() => handleChange(item)}
+                            className={`block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                              item === status ? "bg-gray-100 font-medium" : ""
+                            }`}
+                            role="menuitem"
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   <button
                     onClick={closeModal}
-                    className="absolute top-2 right-3 text-2xl font-bold text-gray-700 hover:text-black"
-                  >
-                    &times;
-                  </button>
-                  <button
-                    onClick={closeModal}
-                    className="absolute top-2 right-3 text-2xl font-bold text-gray-700 hover:text-black"
+                    className="absolute top-5 right-3 text-2xl font-bold text-gray-700 hover:text-black"
                   >
                     &times;
                   </button>
                 </div>
 
-                <div className="flex justify-center mt-5">
+                {/* <div className="flex justify-center mt-5">
                   <Lottie
                     animationData={OrderAnimation}
                     loop={true}
                     style={{ height: 200 }}
                   />
-                </div>
+                </div> */}
 
-                <h2 className="text-2xl font-semibold text-center mb-4">
-                  Preparing order {selectedOrder.orderId}!
+                <h2 className="text-2xl mt-5 font-semibold text-center mb-4">
+                  {statusMessage()} {selectedOrder.orderId}!
                 </h2>
 
                 <div className="space-y-4 text-sm sm:text-base">
@@ -543,6 +686,24 @@ const Orders = () => {
                         minute: "2-digit",
                       })}
                     </strong>
+                  </div>
+                  <div>
+                    {/* Print Button */}
+                    <button
+                      onClick={handlePrint}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4"
+                    >
+                      🖨️ Print Receipt
+                    </button>
+
+                    {/* Printable Area */}
+                    <div
+                      ref={printRef}
+                      className="p-4 bg-white text-black rounded shadow hidden"
+                    >
+                      <Receipt order={selectedOrder} />
+                      {/* Add other order details here as needed */}
+                    </div>
                   </div>
                 </div>
               </div>
