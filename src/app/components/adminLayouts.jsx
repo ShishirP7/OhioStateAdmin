@@ -1,17 +1,30 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
+import axios from "axios";
 
 const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [startupCheck, setStartUpCheck] = useState(false);
   const pathname = usePathname();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:4001/api/startup-check")
+      .then((res) => {
+        setStartUpCheck(true);
+      })
+      .catch((err) => {
+        setStartUpCheck(false);
+      });
+  },[]);
 
   const links = [
     { name: "Dashboard", href: "/dashboard" },
@@ -80,8 +93,11 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        {startupCheck ?<>
+          <main className="flex-1 overflow-y-auto p-6">{children}</main>
         <Toaster />
+        </> : "Server is not running" }
+      
       </div>
     </div>
   );
