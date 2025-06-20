@@ -207,11 +207,16 @@ const getStatusStyle = (status) => {
     case "Pending":
       return "bg-yellow-200 text-yellow-800";
     case "Processing":
+    case "Making":
       return "bg-blue-200 text-blue-800";
     case "Completed":
       return "bg-green-200 text-green-800";
     case "Cancelled":
       return "bg-red-200 text-red-800";
+    case "Packaging":
+      return "bg-purple-200 text-purple-800";
+    case "Out for Delivery":
+      return "bg-orange-200 text-orange-800";
     default:
       return "bg-gray-200 text-gray-800";
   }
@@ -220,16 +225,14 @@ const getStatusStyle = (status) => {
 const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [orders, setOrders] = useState(pizzaOrders); // previously static array
-
-  const [status, setStatus] = useState("Pending");
+  const [orders, setOrders] = useState(pizzaOrders);
   const [isOpen, setIsOpen] = useState(false);
   const printRef = useRef();
 
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
 
-    const win = window.open("", "", "width=380,height=600"); // 380px ≈ 80mm
+    const win = window.open("", "", "width=380,height=600");
 
     win.document.write(`
     <html>
@@ -252,13 +255,13 @@ const Orders = () => {
 
     #invoice-POS {
       width: 80mm;
-      padding: 0; /* Remove padding */
+      padding: 0;
       margin: 0 auto;
       margin-top:-20px;
     }
 
     #invoice-POS #top {
-      padding-top: 0; /* Ensure no top padding */
+      padding-top: 0;
     }
 
     .logo {
@@ -302,20 +305,23 @@ const Orders = () => {
   };
 
   const handleChange = (newStatus) => {
-    setStatus(newStatus);
+    // Update the orders state
+    const updatedOrders = orders.map((order) =>
+      order.orderId === selectedOrder.orderId
+        ? { ...order, status: newStatus }
+        : order
+    );
+    setOrders(updatedOrders);
+
+    // Update the selectedOrder in the modal
+    setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+
     setIsOpen(false);
-    console.log("Status changed to:", newStatus);
   };
 
   const handleRowClick = (order) => {
-    if (order.status !== "Pending") return;
-    const confirmed = window.confirm(
-      `Are you sure you want to proceed with Order ${order.orderId}? Note : Once accepted, you won't be able to accept other orders before completing this one.`
-    );
-    if (confirmed) {
-      setSelectedOrder(order);
-      setShowModal(true);
-    }
+    setSelectedOrder(order);
+    setShowModal(true);
   };
 
   const markAsCompleted = () => {
@@ -325,7 +331,7 @@ const Orders = () => {
         : order
     );
     setOrders(updatedOrders);
-    setSelectedOrder({ ...selectedOrder, status: "Completed" }); // update modal content
+    setSelectedOrder({ ...selectedOrder, status: "Completed" });
   };
 
   const markForDelivery = () => {
@@ -335,7 +341,7 @@ const Orders = () => {
         : order
     );
     setOrders(updatedOrders);
-    setSelectedOrder({ ...selectedOrder, status: "Completed" }); // update modal content
+    setSelectedOrder({ ...selectedOrder, status: "Out for Delivery" });
     setShowModal(false);
   };
 
@@ -344,16 +350,23 @@ const Orders = () => {
   };
 
   const statusMessage = () => {
-    if (status === "Pending") {
-      return "New order received. Awaiting action.";
-    } else if (status === "Cooking") {
-      return "The kitchen is preparing the order.";
-    } else if (status === "Packaging") {
-      return "The order is ready and being packaged.";
-    } else if (status === "Out for Delivery") {
-      return "The order has left the restaurant for delivery.";
-    } else {
-      return "Unknown order status.";
+    if (!selectedOrder) return "";
+
+    switch (selectedOrder.status) {
+      case "Pending":
+        return "New order received. Awaiting action.";
+      case "Making":
+        return "The kitchen is preparing the order.";
+      case "Packaging":
+        return "The order is ready and being packaged.";
+      case "Out for Delivery":
+        return "The order has left the restaurant for delivery.";
+      case "Completed":
+        return "Order has been delivered successfully!";
+      case "Cancelled":
+        return "Order has been cancelled.";
+      default:
+        return "Unknown order status.";
     }
   };
 
@@ -422,7 +435,9 @@ const Orders = () => {
             >
               <option value="">All</option>
               <option value="Pending">Pending</option>
-              <option value="Processing">Processing</option>
+              <option value="Making">Making</option>
+              <option value="Packaging">Packaging</option>
+              <option value="Out for Delivery">Out for Delivery</option>
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
             </select>
@@ -453,11 +468,7 @@ const Orders = () => {
                 <tr
                   key={index}
                   onClick={() => handleRowClick(order)}
-                  className={`${
-                    order.status === "Pending"
-                      ? "cursor-pointer hover:bg-gray-200"
-                      : "cursor-not-allowed opacity-70"
-                  }`}
+                  className="cursor-pointer hover:bg-gray-100"
                 >
                   <td className="px-3 py-2 font-medium text-md">
                     {order.orderId}
@@ -493,241 +504,213 @@ const Orders = () => {
 
         {showModal && selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 backdrop-blur-sm">
-            {selectedOrder.status === "Pending" ? (
-              <div className="bg-white text-black rounded-lg w-[90%] max-w-xl p-6 relative shadow-lg overflow-y-auto max-h-[90vh]">
-                <div className="w-100 ">
-                  <div className="relative inline-block text-left">
-                    <div>
-                      <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        type="button"
-                        className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 transition duration-200"
-                        aria-expanded={isOpen}
-                        aria-haspopup="true"
-                      >
-                        {status}
-                        <svg
-                          className={`-mr-1 size-5 text-gray-400 transform transition-transform duration-200 ${
-                            isOpen ? "rotate-180" : "rotate-0"
-                          }`}
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Dropdown Menu */}
-                    <div
-                      className={`absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200 ${
-                        isOpen
-                          ? "opacity-100 scale-100 visible"
-                          : "opacity-0 scale-95 invisible"
-                      }`}
-                      role="menu"
-                      aria-orientation="vertical"
-                    >
-                      <div className="py-1" role="none">
-                        {[
-                          "Pending",
-                          "Cooking",
-                          "Packaging",
-                          "Out for Delivery",
-                        ].map((item) => (
-                          <button
-                            key={item}
-                            onClick={() => handleChange(item)}
-                            className={`block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                              item === status ? "bg-gray-100 font-medium" : ""
-                            }`}
-                            role="menuitem"
-                          >
-                            {item}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={closeModal}
-                    className="absolute top-5 right-3 text-2xl font-bold text-gray-700 hover:text-black"
-                  >
-                    &times;
-                  </button>
-                </div>
-
-                {/* <div className="flex justify-center mt-5">
-                  <Lottie
-                    animationData={OrderAnimation}
-                    loop={true}
-                    style={{ height: 200 }}
-                  />
-                </div> */}
-
-                <h2 className="text-2xl mt-5 font-semibold text-center mb-4">
-                  {statusMessage()} {selectedOrder.orderId}!
-                </h2>
-
-                <div className="space-y-4 text-sm sm:text-base">
-                  {/* Customer Info */}
+            <div className="bg-white text-black rounded-lg w-[90%] max-w-xl p-6 relative shadow-lg overflow-y-auto max-h-[90vh]">
+              <div className="w-100 ">
+                <div className="relative inline-block text-left">
                   <div>
-                    <h3 className="font-semibold text-lg mb-1 text-red-600">
-                      Customer Details
-                    </h3>
-                    <p>
-                      <strong>Name:</strong> {selectedOrder.customerName}
-                    </p>
-                    <p>
-                      <strong>Phone:</strong> {selectedOrder.contact}
-                    </p>
-                    <p>
-                      <strong>Address:</strong> {selectedOrder.address}
-                    </p>
-                  </div>
-
-                  {/* Pizza Info */}
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1 text-red-600">
-                      Pizza Details
-                    </h3>
-                    <p>
-                      <strong>Pizza:</strong> {selectedOrder.pizza.productName}
-                    </p>
-                    <p>
-                      <strong>Size:</strong> {selectedOrder.pizza.size}
-                    </p>
-                    <p>
-                      <strong>Crust:</strong> {selectedOrder.pizza.crust}
-                    </p>
-                    <p>
-                      <strong>Base Sauce:</strong>{" "}
-                      {selectedOrder.pizza.baseSauce}
-                    </p>
-                    <p>
-                      <strong>Cheese:</strong> {selectedOrder.pizza.cheese}
-                    </p>
-                    <p>
-                      <strong>Toppings:</strong>{" "}
-                      {selectedOrder.pizza.toppings.join(", ")}
-                    </p>
-                  </div>
-
-                  {/* Addons & Extras */}
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1 text-red-600">
-                      Add-ons
-                    </h3>
-                    <ul className="list-disc ml-6">
-                      {selectedOrder.pizza.addOns.map((addon, i) => (
-                        <li key={i}>
-                          {addon.name} ×{addon.quantity}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <h3 className="font-semibold text-lg mt-3 mb-1 text-red-600">
-                      Extras
-                    </h3>
-                    <p>
-                      <strong>Sliced:</strong>{" "}
-                      {selectedOrder.pizza.extras.cutIntoSlices ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Well Done:</strong>{" "}
-                      {selectedOrder.pizza.extras.wellDone ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Gluten-Free:</strong>{" "}
-                      {selectedOrder.pizza.extras.glutenFree ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Spicy Level:</strong>{" "}
-                      {selectedOrder.pizza.extras.spicyLevel}
-                    </p>
-                    <p>
-                      <strong>Note:</strong>{" "}
-                      {selectedOrder.pizza.specialInstructions}
-                    </p>
-                  </div>
-
-                  {/* Payment Info */}
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1 text-red-600">
-                      Payment Summary
-                    </h3>
-                    <p>
-                      <strong>Method:</strong> {selectedOrder.payment.method}
-                    </p>
-                    <p>
-                      <strong>Amount Paid:</strong> $
-                      {selectedOrder.payment.amountPaid.toFixed(2)}
-                    </p>
-                    <p>
-                      <strong>Tip:</strong> $
-                      {selectedOrder.payment.tip.toFixed(2)}
-                    </p>
-                  </div>
-
-                  <div className="text-center text-sm text-gray-600 mt-4 text-red-600">
-                    Order ID: <strong>{selectedOrder.orderId}</strong>
-                    <br />
-                    Estimated Delivery:{" "}
-                    <strong>
-                      {new Date(
-                        selectedOrder.estimatedDelivery
-                      ).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </strong>
-                  </div>
-                  <div>
-                    {/* Print Button */}
                     <button
-                      onClick={handlePrint}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4"
+                      onClick={() => setIsOpen(!isOpen)}
+                      type="button"
+                      className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 transition duration-200"
+                      aria-expanded={isOpen}
+                      aria-haspopup="true"
                     >
-                      🖨️ Print Receipt
+                      {selectedOrder.status}
+                      <svg
+                        className={`-mr-1 size-5 text-gray-400 transform transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : "rotate-0"
+                        }`}
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
                     </button>
+                  </div>
 
-                    {/* Printable Area */}
-                    <div
-                      ref={printRef}
-                      className="p-4 bg-white text-black rounded shadow hidden"
-                    >
-                      <Receipt order={selectedOrder} />
-                      {/* Add other order details here as needed */}
+                  {/* Dropdown Menu */}
+                  <div
+                    className={`absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200 ${
+                      isOpen
+                        ? "opacity-100 scale-100 visible"
+                        : "opacity-0 scale-95 invisible"
+                    }`}
+                    role="menu"
+                    aria-orientation="vertical"
+                  >
+                    <div className="py-1" role="none">
+                      {[
+                        "Pending",
+                        "Making",
+                        "Packaging",
+                        "Out for Delivery",
+                        "Completed",
+                        "Cancelled",
+                      ].map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => handleChange(item)}
+                          className={`block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                            item === selectedOrder.status
+                              ? "bg-gray-100 font-medium"
+                              : ""
+                          }`}
+                          role="menuitem"
+                        >
+                          {item}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
+                <button
+                  onClick={closeModal}
+                  className="absolute top-5 right-3 text-2xl font-bold text-gray-700 hover:text-black"
+                >
+                  &times;
+                </button>
               </div>
-            ) : (
-              <div className="bg-white text-black rounded-lg w-[90%] max-w-xl p-6 relative shadow-lg overflow-y-auto max-h-[90vh]">
-                <div className="flex flex-col items-center justify-center mt-5">
-                  <Lottie
-                    animationData={PackagingAnimation}
-                    loop={true}
-                    style={{ height: 200 }}
-                  />
 
-                  <strong className="text-lg text-bold text-gray-600 mt-4 text-red-600">
-                    The box is being prepared ....
+              <h2 className="text-2xl mt-5 font-semibold text-center mb-4">
+                {statusMessage()} {selectedOrder.orderId}!
+              </h2>
+
+              <div className="space-y-4 text-sm sm:text-base">
+                {/* Customer Info */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-1 text-red-600">
+                    Customer Details
+                  </h3>
+                  <p>
+                    <strong>Name:</strong> {selectedOrder.customerName}
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> {selectedOrder.contact}
+                  </p>
+                  <p>
+                    <strong>Address:</strong> {selectedOrder.address}
+                  </p>
+                </div>
+
+                {/* Pizza Info */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-1 text-red-600">
+                    Pizza Details
+                  </h3>
+                  <p>
+                    <strong>Pizza:</strong> {selectedOrder.pizza.productName}
+                  </p>
+                  <p>
+                    <strong>Size:</strong> {selectedOrder.pizza.size}
+                  </p>
+                  <p>
+                    <strong>Crust:</strong> {selectedOrder.pizza.crust}
+                  </p>
+                  <p>
+                    <strong>Base Sauce:</strong> {selectedOrder.pizza.baseSauce}
+                  </p>
+                  <p>
+                    <strong>Cheese:</strong> {selectedOrder.pizza.cheese}
+                  </p>
+                  <p>
+                    <strong>Toppings:</strong>{" "}
+                    {selectedOrder.pizza.toppings.join(", ")}
+                  </p>
+                </div>
+
+                {/* Addons & Extras */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-1 text-red-600">
+                    Add-ons
+                  </h3>
+                  <ul className="list-disc ml-6">
+                    {selectedOrder.pizza.addOns.map((addon, i) => (
+                      <li key={i}>
+                        {addon.name} ×{addon.quantity}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <h3 className="font-semibold text-lg mt-3 mb-1 text-red-600">
+                    Extras
+                  </h3>
+                  <p>
+                    <strong>Sliced:</strong>{" "}
+                    {selectedOrder.pizza.extras.cutIntoSlices ? "Yes" : "No"}
+                  </p>
+                  <p>
+                    <strong>Well Done:</strong>{" "}
+                    {selectedOrder.pizza.extras.wellDone ? "Yes" : "No"}
+                  </p>
+                  <p>
+                    <strong>Gluten-Free:</strong>{" "}
+                    {selectedOrder.pizza.extras.glutenFree ? "Yes" : "No"}
+                  </p>
+                  <p>
+                    <strong>Spicy Level:</strong>{" "}
+                    {selectedOrder.pizza.extras.spicyLevel}
+                  </p>
+                  <p>
+                    <strong>Note:</strong>{" "}
+                    {selectedOrder.pizza.specialInstructions}
+                  </p>
+                </div>
+
+                {/* Payment Info */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-1 text-red-600">
+                    Payment Summary
+                  </h3>
+                  <p>
+                    <strong>Method:</strong> {selectedOrder.payment.method}
+                  </p>
+                  <p>
+                    <strong>Amount Paid:</strong> $
+                    {selectedOrder.payment.amountPaid.toFixed(2)}
+                  </p>
+                  <p>
+                    <strong>Tip:</strong> $
+                    {selectedOrder.payment.tip.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="text-center text-sm text-gray-600 mt-4 text-red-600">
+                  Order ID: <strong>{selectedOrder.orderId}</strong>
+                  <br />
+                  Estimated Delivery:{" "}
+                  <strong>
+                    {new Date(
+                      selectedOrder.estimatedDelivery
+                    ).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </strong>
+                </div>
+                <div>
+                  {/* Print Button */}
                   <button
-                    onClick={markForDelivery}
-                    className="text-md mt-3 font-bold bg-red-600 p-2 rounded-md text-white cursor-pointer"
+                    onClick={handlePrint}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4"
                   >
-                    Set it out for delivery
+                    🖨️ Print Receipt
                   </button>
+
+                  {/* Printable Area */}
+                  <div
+                    ref={printRef}
+                    className="p-4 bg-white text-black rounded shadow hidden"
+                  >
+                    <Receipt order={selectedOrder} />
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
