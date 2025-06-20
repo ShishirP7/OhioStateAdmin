@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 
 const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,7 +25,8 @@ const AdminLayout = ({ children }) => {
 
   // Determine the current page name based on pathname
   const currentPage =
-    links.find((link) => pathname.startsWith(link.href))?.name || "Admin Dashboard";
+    links.find((link) => pathname.startsWith(link.href))?.name ||
+    "Admin Dashboard";
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -64,7 +66,11 @@ const AdminLayout = ({ children }) => {
               className="text-gray-600 lg:hidden"
               aria-label="Toggle Sidebar"
             >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {sidebarOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
             <h1 className="font-bold text-xl text-gray-800">{currentPage}</h1>
           </div>
@@ -75,6 +81,7 @@ const AdminLayout = ({ children }) => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <Toaster />
       </div>
     </div>
   );

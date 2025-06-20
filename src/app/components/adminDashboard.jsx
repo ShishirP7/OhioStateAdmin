@@ -1,5 +1,7 @@
 "use client";
+import axios from "axios";
 import React, { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
 const AdminRoles = () => {
   const [stores, setStores] = useState([]);
@@ -9,6 +11,7 @@ const AdminRoles = () => {
   const [storeData, setStoreData] = useState({
     name: "",
     address: "",
+    zipCode: "",
     phone: "",
     website: "",
     openTime: "",
@@ -25,6 +28,7 @@ const AdminRoles = () => {
     if (
       !storeData.name ||
       !storeData.address ||
+      !storeData.zipCode ||
       !storeData.phone ||
       !storeData.website ||
       !storeData.openTime ||
@@ -34,31 +38,7 @@ const AdminRoles = () => {
       alert("Please fill in all fields.");
       return;
     }
-
-    if (editingStore) {
-      // Update existing store
-      setStores(
-        stores.map((s) => (s.id === editingStore.id ? { ...storeData, id: s.id } : s))
-      );
-      setEditingStore(null);
-    } else {
-      // Add new store
-      const newBranch = { ...storeData, id: Date.now() };
-      setStores([...stores, newBranch]);
-    }
-
-    // Reset form and close
-    setStoreData({
-      name: "",
-      address: "",
-      phone: "",
-      website: "",
-      openTime: "",
-      status: "Open",
-      email: "",
-      password: "",
-    });
-    setIsAdding(false);
+    alert("hello")
   };
 
   const handleEditStore = (store) => {
@@ -111,6 +91,14 @@ const AdminRoles = () => {
             name="address"
             placeholder="Address"
             value={storeData.address}
+            onChange={handleInputChange}
+            className="border p-1 w-full"
+          />
+          <input
+            type="text"
+            name="zipCode"
+            placeholder="Zip Code"
+            value={storeData.zipCode}
             onChange={handleInputChange}
             className="border p-1 w-full"
           />
@@ -210,6 +198,7 @@ const AdminRoles = () => {
             <div>
               <p className="font-bold">{store.name}</p>
               <p className="text-sm text-gray-600">{store.address}</p>
+              <p className="text-sm text-gray-600">{store.zipCode}</p>
               <p className="text-sm">Phone: {store.phone}</p>
               <p className="text-sm">Website: {store.website}</p>
               <p className="text-sm">Open Time: {store.openTime}</p>
