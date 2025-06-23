@@ -1,57 +1,78 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
-import { menuItems } from "../datas/menuData";
+import axios from "axios";
+
+const API_URL = "http://localhost:4001/api/specials";
+const MENU_API_URL = "http://localhost:4001/api/menuitems"; // Assuming this exists
 
 const Combos = () => {
   const [combos, setCombos] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentCombo, setCurrentCombo] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
+
+  // Fetch combos and menu items
+  useEffect(() => {
+    fetchCombos();
+    fetchMenuItems();
+  }, []);
+
+  const fetchCombos = async () => {
+    const res = await axios.get(API_URL);
+    setCombos(res.data);
+  };
+
+  const fetchMenuItems = async () => {
+    const res = await axios.get(MENU_API_URL);
+    setMenuItems(res.data);
+  };
 
   const openModal = (combo = null) => {
     setCurrentCombo(combo);
-    setPreviewImage(combo?.image || null);
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setCurrentCombo(null);
     setModalOpen(false);
-    setPreviewImage(null);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-
-    const items = [
-      formData.get("item1"),
-      formData.get("item2"),
-      formData.get("item3"),
-      formData.get("item4"),
-    ]
-      .filter(Boolean)
-      .map((id) => menuItems.find((m) => m.id === parseInt(id)));
+    const form = e.target;
 
     const newCombo = {
-      id: currentCombo?.id || Date.now(),
-      name: formData.get("name"),
-      description: formData.get("description"),
-      price: parseFloat(formData.get("price")),
-      image: previewImage || "",
-      items,
+      name: form.name.value,
+      description: form.description.value,
+      price: parseFloat(form.price.value),
+      isSpecial: true,
+      items: [
+        form.item1.value,
+        form.item2.value,
+        form.item3.value,
+        form.item4.value,
+      ].filter(Boolean),
     };
 
-    if (currentCombo) {
-      setCombos((prev) =>
-        prev.map((c) => (c.id === currentCombo.id ? newCombo : c))
-      );
-    } else {
-      setCombos((prev) => [...prev, newCombo]);
+    try {
+      if (currentCombo?._id) {
+        await axios.put(`${API_URL}/${currentCombo._id}`, newCombo);
+      } else {
+        await axios.post(API_URL, newCombo);
+      }
+      fetchCombos();
+      closeModal();
+    } catch (err) {
+      console.error(err);
     }
+  };
 
-    closeModal();
+  const handleDelete = async (id) => {
+    if (confirm("Are you sure you want to delete this combo?")) {
+      await axios.delete(`${API_URL}/${id}`);
+      fetchCombos();
+    }
   };
 
   return (
@@ -67,36 +88,34 @@ const Combos = () => {
           </button>
         </div>
 
-        {/* Combos list */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {combos.map((combo) => (
-            <div key={combo.id} className="bg-white p-4 rounded shadow">
-              {combo.image && (
-                <img
-                  src={combo.image}
-                  alt={combo.name}
-                  className="w-full h-32 object-cover rounded mb-2"
-                />
-              )}
+            <div key={combo._id} className="bg-white p-4 rounded shadow">
               <h3 className="text-lg font-semibold">{combo.name}</h3>
-              <p className="text-sm text-gray-500 italic mb-1">
-                {combo.description}
-              </p>
+              <p className="text-sm text-gray-500 italic mb-1">{combo.description}</p>
               <p className="text-sm text-gray-600">
                 Items:{" "}
-                {combo.items.length > 0
+                {combo.items?.length > 0
                   ? combo.items.map((item) => item.name).join(", ")
                   : "None"}
               </p>
               <p className="text-sm text-gray-800 font-semibold">
                 Price: ${combo.price.toFixed(2)}
               </p>
-              <button
-                onClick={() => openModal(combo)}
-                className="mt-2 text-blue-500 hover:underline"
-              >
-                Edit
-              </button>
+              <div className="flex justify-between mt-2 text-sm">
+                <button
+                  onClick={() => openModal(combo)}
+                  className="text-blue-500 hover:underline"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(combo._id)}
+                  className="text-red-500 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -137,47 +156,21 @@ const Combos = () => {
                 required
               />
 
-              {/* Dropdowns for selecting up to 4 items */}
               {[1, 2, 3, 4].map((num) => (
                 <select
                   key={num}
                   name={`item${num}`}
-                  defaultValue={currentCombo?.items?.[num - 1]?.id || ""}
+                  defaultValue={currentCombo?.items?.[num - 1]?._id || ""}
                   className="w-full border px-3 py-2 rounded"
                 >
                   <option value="">Select Item {num} (optional)</option>
                   {menuItems.map((item) => (
-                    <option key={item.id} value={item.id}>
+                    <option key={item._id} value={item._id}>
                       {item.name} (${item.price}) - {item.category}
                     </option>
                   ))}
                 </select>
               ))}
-
-              {/* Image upload */}
-              <div>
-                {previewImage && (
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    className="w-20 h-20 object-cover rounded mb-2 cursor-pointer"
-                    onClick={() => window.open(previewImage, "_blank")}
-                  />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => setPreviewImage(reader.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className="block border px-3 py-2 rounded w-full"
-                />
-              </div>
 
               <div className="flex justify-end gap-2">
                 <button
