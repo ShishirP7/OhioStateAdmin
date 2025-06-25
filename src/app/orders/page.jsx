@@ -1,221 +1,71 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import Lottie from "lottie-react";
 import OrderAnimation from "../../../Assets/Preparing.json";
 import PackagingAnimation from "../../../Assets/Packaging.json";
 import Receipt from "../components/Recipt";
+import axios from "axios";
 
-const pizzaOrders = [
-  {
-    orderId: "A001",
-    customerName: "John Doe",
-    contact: "+1 (614) 555-1111",
-    address: "123 Elm Street, Columbus, OH",
-    status: "Pending",
-    orderTime: "2025-06-01T13:20:00Z",
-    pizza: {
-      productId: 222,
-      productName: "Pepperoni",
-      size: "Medium",
-      crust: "Thin Crust",
-      baseSauce: "Tomato Basil",
-      cheese: "Regular Mozzarella",
-      toppings: ["Pepperoni", "Cheese"],
-      addOns: [{ name: "Garlic Sauce", quantity: 1 }],
-      extras: {
-        cutIntoSlices: true,
-        wellDone: false,
-        glutenFree: false,
-        spicyLevel: "Mild",
+// Sample data in the new format
+const pizzaOrders = {
+  data: [
+    {
+      billingInfo: {
+        firstName: "Emma",
+        lastName: "Wilson",
+        phone: "6145551234",
+        email: "emma.wilson@example.com",
       },
-      specialInstructions: "No onions please.",
-    },
-    payment: {
-      method: "Cash",
-      amountPaid: 24.0,
-      tip: 2.0,
-    },
-    estimatedDelivery: "2025-06-01T13:50:00Z",
-  },
-  {
-    orderId: "A002",
-    customerName: "Jane Smith",
-    contact: "+1 (614) 555-2222",
-    address: "456 Oak Avenue, Dublin, OH",
-    status: "Completed",
-    orderTime: "2025-06-01T12:10:00Z",
-    pizza: {
-      productId: 223,
-      productName: "Veggie Delight",
-      size: "Small",
-      crust: "Cheese Burst",
-      baseSauce: "Garlic Alfredo",
-      cheese: "Extra Cheese",
-      toppings: ["Tomatoes", "Olives", "Bell Peppers", "Mushrooms"],
-      addOns: [],
-      extras: {
-        cutIntoSlices: true,
-        wellDone: false,
-        glutenFree: true,
-        spicyLevel: "None",
+      carryoutInfo: {
+        timeOption: "asap",
+        address: "100 High Street, Columbus, OH 43215",
       },
-      specialInstructions: "Gluten-free crust only.",
-    },
-    payment: {
-      method: "Online (UPI)",
-      amountPaid: 12.0,
-      tip: 1.0,
-    },
-    estimatedDelivery: "2025-06-01T12:45:00Z",
-  },
-  {
-    orderId: "A003",
-    customerName: "Mike Johnson",
-    contact: "+1 (614) 555-3333",
-    address: "789 Maple Road, Hilliard, OH",
-    status: "Cancelled",
-    orderTime: "2025-06-01T11:30:00Z",
-    pizza: {
-      productId: 224,
-      productName: "BBQ Chicken",
-      size: "Large",
-      crust: "Hand Tossed",
-      baseSauce: "BBQ Sauce",
-      cheese: "Regular Cheese",
-      toppings: ["BBQ Chicken", "Red Onions", "Corn"],
-      addOns: [],
-      extras: {
-        cutIntoSlices: false,
-        wellDone: false,
-        glutenFree: false,
-        spicyLevel: "Hot",
-      },
-      specialInstructions: "Cancelled due to address error.",
-    },
-    payment: {
-      method: "Online (Card)",
-      amountPaid: 36.0,
-      tip: 0.0,
-    },
-    estimatedDelivery: "2025-06-01T12:00:00Z",
-  },
-  {
-    orderId: "A004",
-    customerName: "Emily Davis",
-    contact: "+1 (614) 555-4444",
-    address: "321 Pine Lane, Westerville, OH",
-    status: "Processing",
-    orderTime: "2025-06-01T14:00:00Z",
-    pizza: {
-      productId: 225,
-      productName: "Margherita",
-      size: "Medium",
-      crust: "Cheese Burst",
-      baseSauce: "Tomato Sauce",
-      cheese: "Extra Cheese",
-      toppings: ["Basil", "Tomatoes"],
-      addOns: [{ name: "Chili Flakes", quantity: 1 }],
-      extras: {
-        cutIntoSlices: true,
-        wellDone: true,
-        glutenFree: false,
-        spicyLevel: "Medium",
-      },
-      specialInstructions: "Add extra basil on top.",
-    },
-    payment: {
-      method: "Cash",
-      amountPaid: 22.0,
-      tip: 2.0,
-    },
-    estimatedDelivery: "2025-06-01T14:35:00Z",
-  },
-  {
-    orderId: "A005",
-    customerName: "Chris Lee",
-    contact: "+1 (614) 555-5555",
-    address: "654 Cedar Court, Gahanna, OH",
-    status: "Pending",
-    orderTime: "2025-06-01T14:15:00Z",
-    pizza: {
-      productId: 225,
-      productName: "Meat Lovers",
-      size: "Large",
-      crust: "Stuffed Crust",
-      baseSauce: "Tomato Garlic",
-      cheese: "Mozzarella + Cheddar",
-      toppings: ["Pepperoni", "Sausage", "Bacon", "Ham"],
-      addOns: [
-        { name: "Ranch Dip", quantity: 2 },
-        { name: "Choco Lava Cake", quantity: 1 },
+      cartItems: [
+        {
+          name: "Medium Veggie Pizza",
+          quantity: 1,
+          totalPrice: 14.99,
+          selectedOptions: {
+            crust: "Thin",
+            toppings: ["Mushrooms", "Olives"],
+          },
+          items: [],
+        },
       ],
-      extras: {
-        cutIntoSlices: true,
-        wellDone: true,
-        glutenFree: false,
-        spicyLevel: "Hot",
+      paymentInfo: {
+        method: "Credit Card",
+        last4: "4242",
       },
-      specialInstructions: "Box separately with addons.",
+      orderTotal: 14.99,
+      status: "pending",
+      createdAt: "2025-06-23T21:30:23.041Z",
+      updatedAt: "2025-06-23T21:30:23.041Z",
+      id: "6859c76f8ae6c28baff9140c",
     },
-    payment: {
-      method: "Online (PayPal)",
-      amountPaid: 48.0,
-      tip: 5.0,
-    },
-    estimatedDelivery: "2025-06-01T14:50:00Z",
+  ],
+  meta: {
+    total: 1,
+    page: 1,
+    limit: 10,
+    pages: 1,
   },
-  {
-    orderId: "A006",
-    customerName: "Alex Carter",
-    contact: "+1 (614) 555-9012",
-    address: "999 River Bend Drive, Columbus, OH 43215",
-    status: "Making",
-    orderTime: "2025-06-01T14:12:00Z",
-    pizza: {
-      productId: 301,
-      productName: "BBQ Chicken",
-      size: "Large",
-      crust: "Hand Tossed",
-      baseSauce: "BBQ Sauce",
-      cheese: "Extra Mozzarella",
-      toppings: ["Grilled Chicken", "Red Onions", "Green Peppers", "Cilantro"],
-      addOns: [
-        { name: "Ranch Dip", quantity: 2 },
-        { name: "Garlic Bread", quantity: 1 },
-      ],
-      extras: {
-        cutIntoSlices: true,
-        wellDone: true,
-        glutenFree: false,
-        spicyLevel: "Medium",
-      },
-      specialInstructions:
-        "Make sure it's extra crispy and packed separately from addons.",
-    },
-    payment: {
-      method: "Online (Card)",
-      amountPaid: 28.99,
-      tip: 3.0,
-    },
-    estimatedDelivery: "2025-06-01T14:45:00Z",
-  },
-];
+};
 
 const getStatusStyle = (status) => {
-  switch (status) {
-    case "Pending":
+  switch (status.toLowerCase()) {
+    case "pending":
       return "bg-yellow-200 text-yellow-800";
-    case "Processing":
-    case "Making":
+    case "processing":
+    case "making":
       return "bg-blue-200 text-blue-800";
-    case "Completed":
+    case "completed":
       return "bg-green-200 text-green-800";
-    case "Cancelled":
+    case "cancelled":
       return "bg-red-200 text-red-800";
-    case "Packaging":
+    case "packaging":
       return "bg-purple-200 text-purple-800";
-    case "Out for Delivery":
+    case "out for delivery":
       return "bg-orange-200 text-orange-800";
     default:
       return "bg-gray-200 text-gray-800";
@@ -225,7 +75,7 @@ const getStatusStyle = (status) => {
 const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [orders, setOrders] = useState(pizzaOrders);
+  const [orders, setOrders] = useState(pizzaOrders.data);
   const [isOpen, setIsOpen] = useState(false);
   const printRef = useRef();
 
@@ -304,17 +154,36 @@ const Orders = () => {
     win.document.close();
   };
 
-  const handleChange = (newStatus) => {
-    // Update the orders state
-    const updatedOrders = orders.map((order) =>
-      order.orderId === selectedOrder.orderId
-        ? { ...order, status: newStatus }
-        : order
-    );
-    setOrders(updatedOrders);
+  useEffect(() => {
+    axios
+      .get("http://localhost:4001/api/orders/")
+      .then((res) => {
+        console.log(res);
+        setOrders(res.data.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
-    // Update the selectedOrder in the modal
-    setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+  const handleChange = async (newStatus) => {
+    try {
+
+      console.log(selectedOrder)
+      // Update on server
+      await axios.put(`http://localhost:4001/api/orders/${selectedOrder.id}`, {
+        status: newStatus,
+      });
+
+      // Update local state
+      const updatedOrders = orders.map((order) =>
+        order.id === selectedOrder.id ? { ...order, status: newStatus } : order
+      );
+      setOrders(updatedOrders);
+      setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
 
     setIsOpen(false);
   };
@@ -324,27 +193,6 @@ const Orders = () => {
     setShowModal(true);
   };
 
-  const markAsCompleted = () => {
-    const updatedOrders = orders.map((order) =>
-      order.orderId === selectedOrder.orderId
-        ? { ...order, status: "Completed" }
-        : order
-    );
-    setOrders(updatedOrders);
-    setSelectedOrder({ ...selectedOrder, status: "Completed" });
-  };
-
-  const markForDelivery = () => {
-    const updatedOrders = orders.map((order) =>
-      order.orderId === selectedOrder.orderId
-        ? { ...order, status: "Out for Delivery" }
-        : order
-    );
-    setOrders(updatedOrders);
-    setSelectedOrder({ ...selectedOrder, status: "Out for Delivery" });
-    setShowModal(false);
-  };
-
   const closeModal = () => {
     setShowModal(false);
   };
@@ -352,18 +200,18 @@ const Orders = () => {
   const statusMessage = () => {
     if (!selectedOrder) return "";
 
-    switch (selectedOrder.status) {
-      case "Pending":
+    switch (selectedOrder.status.toLowerCase()) {
+      case "pending":
         return "New order received. Awaiting action.";
-      case "Making":
+      case "making":
         return "The kitchen is preparing the order.";
-      case "Packaging":
+      case "packaging":
         return "The order is ready and being packaged.";
-      case "Out for Delivery":
+      case "out for delivery":
         return "The order has left the restaurant for delivery.";
-      case "Completed":
+      case "completed":
         return "Order has been delivered successfully!";
-      case "Cancelled":
+      case "cancelled":
         return "Order has been cancelled.";
       default:
         return "Unknown order status.";
@@ -414,11 +262,17 @@ const Orders = () => {
               className="w-full px-3 py-2 text-sm border rounded-md dark:bg-gray-100 dark:text-black"
             >
               <option value="">All</option>
-              <option value="Pepperoni">Pepperoni</option>
-              <option value="Veggie Delight">Veggie Delight</option>
-              <option value="BBQ Chicken">BBQ Chicken</option>
-              <option value="Margherita">Margherita</option>
-              <option value="Meat Lovers">Meat Lovers</option>
+              {Array.from(
+                new Set(
+                  orders.flatMap((order) =>
+                    order.cartItems.map((item) => item.name)
+                  )
+                )
+              ).map((pizzaName, index) => (
+                <option key={index} value={pizzaName}>
+                  {pizzaName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -434,12 +288,11 @@ const Orders = () => {
               className="w-full px-3 py-2 text-sm border rounded-md dark:bg-gray-100 dark:text-black"
             >
               <option value="">All</option>
-              <option value="Pending">Pending</option>
-              <option value="Making">Making</option>
-              <option value="Packaging">Packaging</option>
-              <option value="Out for Delivery">Out for Delivery</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="pending">Pending</option>
+              <option value="cooking">Making</option>
+              <option value="delivery">Out for Delivery</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -454,10 +307,8 @@ const Orders = () => {
               <tr className="dark:bg-red-600">
                 <th className="p-3">Order ID</th>
                 <th className="p-3">Customer</th>
-                <th className="p-3">Product ID</th>
                 <th className="p-3">Product Name</th>
-                <th className="p-3">Size</th>
-                <th className="p-3">Qty (Add-ons)</th>
+                <th className="p-3">Quantity</th>
                 <th className="p-3">Price ($)</th>
                 <th className="p-3">Delivery Address</th>
                 <th className="p-3">Status</th>
@@ -471,22 +322,22 @@ const Orders = () => {
                   className="cursor-pointer hover:bg-gray-100"
                 >
                   <td className="px-3 py-2 font-medium text-md">
-                    {order.orderId}
+                    {order.id.substring(0, 8)}
                   </td>
-                  <td className="px-3 py-2">{order.customerName}</td>
-                  <td className="px-3 py-2">{order.pizza.productId}</td>
-                  <td className="px-3 py-2">{order.pizza.productName}</td>
-                  <td className="px-3 py-2">{order.pizza.size}</td>
                   <td className="px-3 py-2">
-                    {order.pizza.addOns.reduce(
+                    {order.billingInfo.firstName} {order.billingInfo.lastName}
+                  </td>
+                  <td className="px-3 py-2">
+                    {order.cartItems.map((item) => item.name).join(", ")}
+                  </td>
+                  <td className="px-3 py-2">
+                    {order.cartItems.reduce(
                       (total, item) => total + item.quantity,
                       0
                     )}
                   </td>
-                  <td className="px-3 py-2">
-                    ${order.payment.amountPaid.toFixed(2)}
-                  </td>
-                  <td className="px-3 py-2">{order.address}</td>
+                  <td className="px-3 py-2">${order.orderTotal.toFixed(2)}</td>
+                  <td className="px-3 py-2">{order.carryoutInfo.address}</td>
                   <td className="px-3 py-2">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
@@ -545,12 +396,11 @@ const Orders = () => {
                   >
                     <div className="py-1" role="none">
                       {[
-                        "Pending",
-                        "Making",
-                        "Packaging",
-                        "Out for Delivery",
-                        "Completed",
-                        "Cancelled",
+                        "pending",
+                        "cooking",
+                        "cancelled",
+                        "out for delivery",
+                        "completed",
                       ].map((item) => (
                         <button
                           key={item}
@@ -577,7 +427,7 @@ const Orders = () => {
               </div>
 
               <h2 className="text-2xl mt-5 font-semibold text-center mb-4">
-                {statusMessage()} {selectedOrder.orderId}!
+                {statusMessage()} {selectedOrder.id.substring(0, 8)}!
               </h2>
 
               <div className="space-y-4 text-sm sm:text-base">
@@ -587,78 +437,46 @@ const Orders = () => {
                     Customer Details
                   </h3>
                   <p>
-                    <strong>Name:</strong> {selectedOrder.customerName}
+                    <strong>Name:</strong> {selectedOrder.billingInfo.firstName}{" "}
+                    {selectedOrder.billingInfo.lastName}
                   </p>
                   <p>
-                    <strong>Phone:</strong> {selectedOrder.contact}
+                    <strong>Phone:</strong> {selectedOrder.billingInfo.phone}
                   </p>
                   <p>
-                    <strong>Address:</strong> {selectedOrder.address}
+                    <strong>Email:</strong> {selectedOrder.billingInfo.email}
+                  </p>
+                  <p>
+                    <strong>Address:</strong>{" "}
+                    {selectedOrder.carryoutInfo.address}
                   </p>
                 </div>
 
-                {/* Pizza Info */}
+                {/* Order Items */}
                 <div>
                   <h3 className="font-semibold text-lg mb-1 text-red-600">
-                    Pizza Details
+                    Order Items
                   </h3>
-                  <p>
-                    <strong>Pizza:</strong> {selectedOrder.pizza.productName}
-                  </p>
-                  <p>
-                    <strong>Size:</strong> {selectedOrder.pizza.size}
-                  </p>
-                  <p>
-                    <strong>Crust:</strong> {selectedOrder.pizza.crust}
-                  </p>
-                  <p>
-                    <strong>Base Sauce:</strong> {selectedOrder.pizza.baseSauce}
-                  </p>
-                  <p>
-                    <strong>Cheese:</strong> {selectedOrder.pizza.cheese}
-                  </p>
-                  <p>
-                    <strong>Toppings:</strong>{" "}
-                    {selectedOrder.pizza.toppings.join(", ")}
-                  </p>
-                </div>
-
-                {/* Addons & Extras */}
-                <div>
-                  <h3 className="font-semibold text-lg mb-1 text-red-600">
-                    Add-ons
-                  </h3>
-                  <ul className="list-disc ml-6">
-                    {selectedOrder.pizza.addOns.map((addon, i) => (
-                      <li key={i}>
-                        {addon.name} ×{addon.quantity}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <h3 className="font-semibold text-lg mt-3 mb-1 text-red-600">
-                    Extras
-                  </h3>
-                  <p>
-                    <strong>Sliced:</strong>{" "}
-                    {selectedOrder.pizza.extras.cutIntoSlices ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Well Done:</strong>{" "}
-                    {selectedOrder.pizza.extras.wellDone ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Gluten-Free:</strong>{" "}
-                    {selectedOrder.pizza.extras.glutenFree ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Spicy Level:</strong>{" "}
-                    {selectedOrder.pizza.extras.spicyLevel}
-                  </p>
-                  <p>
-                    <strong>Note:</strong>{" "}
-                    {selectedOrder.pizza.specialInstructions}
-                  </p>
+                  {selectedOrder.cartItems.map((item, index) => (
+                    <div key={index} className="mb-4">
+                      <p>
+                        <strong>Item:</strong> {item.name} ×{item.quantity}
+                      </p>
+                      <p>
+                        <strong>Price:</strong> ${item.totalPrice.toFixed(2)}
+                      </p>
+                      <p>
+                        <strong>Crust:</strong> {item.selectedOptions.crust}
+                      </p>
+                      {item.selectedOptions.toppings &&
+                        item.selectedOptions.toppings.length > 0 && (
+                          <p>
+                            <strong>Toppings:</strong>{" "}
+                            {item.selectedOptions.toppings.join(", ")}
+                          </p>
+                        )}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Payment Info */}
@@ -667,29 +485,22 @@ const Orders = () => {
                     Payment Summary
                   </h3>
                   <p>
-                    <strong>Method:</strong> {selectedOrder.payment.method}
+                    <strong>Method:</strong> {selectedOrder.paymentInfo.method}
+                    {selectedOrder.paymentInfo.last4 &&
+                      ` (•••• ${selectedOrder.paymentInfo.last4})`}
                   </p>
                   <p>
-                    <strong>Amount Paid:</strong> $
-                    {selectedOrder.payment.amountPaid.toFixed(2)}
-                  </p>
-                  <p>
-                    <strong>Tip:</strong> $
-                    {selectedOrder.payment.tip.toFixed(2)}
+                    <strong>Total Amount:</strong> $
+                    {selectedOrder.orderTotal.toFixed(2)}
                   </p>
                 </div>
 
                 <div className="text-center text-sm text-gray-600 mt-4 text-red-600">
-                  Order ID: <strong>{selectedOrder.orderId}</strong>
+                  Order ID: <strong>{selectedOrder.id.substring(0, 8)}</strong>
                   <br />
-                  Estimated Delivery:{" "}
+                  Order Time:{" "}
                   <strong>
-                    {new Date(
-                      selectedOrder.estimatedDelivery
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(selectedOrder.createdAt).toLocaleString()}
                   </strong>
                 </div>
                 <div>

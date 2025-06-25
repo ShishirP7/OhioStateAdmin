@@ -4,7 +4,10 @@ import React from "react";
 const Receipt = ({ order }) => {
   if (!order) return null;
 
-  const { customerName, contact, address, pizza, payment, orderId } = order;
+  const { billingInfo, carryoutInfo, cartItems, paymentInfo, orderTotal, id } = order;
+
+  // Calculate total quantity of all items
+  const totalQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <div id="invoice-POS" className="text-center">
@@ -27,9 +30,10 @@ const Receipt = ({ order }) => {
         <div className="info">
           <h2>Contact Info</h2>
           <p>
-            Address : {address} <br />
-            Email : JohnDoe@gmail.com <br />
-            Phone : {contact}
+            Name: {billingInfo.firstName} {billingInfo.lastName}<br />
+            Address: {carryoutInfo.address} <br />
+            Email: {billingInfo.email} <br />
+            Phone: {billingInfo.phone}
           </p>
         </div>
       </div>
@@ -51,45 +55,60 @@ const Receipt = ({ order }) => {
               </tr>
             </thead>
             <tbody>
-              <tr className="service">
-                <td className="tableitem" style={{
-                    display:"flex",
-                    justifyContent:"start"
-                }}>
-                  <p className="itemtext">{pizza.productName}</p>
-                </td>
-                <td className="tableitem">
-                  <p className="itemtext">1</p>
-                </td>
-                <td className="tableitem">
-                  <p className="itemtext">${payment.amountPaid.toFixed(2)}</p>
-                </td>
-              </tr>
-
-              {pizza.addOns.map((addon, i) => (
-                <tr key={i} className="service">
-                  <td className="tableitem" style={{
-                    display:"flex",
-                    justifyContent:"start"
-                }}>
-                    <p className="itemtext">{addon.name}</p>
-                  </td>
-                  <td className="tableitem">
-                    <p className="itemtext">{addon.quantity}</p>
-                  </td>
-                  <td className="tableitem">
-                    <p className="itemtext">-</p>
-                  </td>
-                </tr>
+              {cartItems.map((item, index) => (
+                <React.Fragment key={index}>
+                  <tr className="service">
+                    <td className="tableitem" style={{
+                      display: "flex",
+                      justifyContent: "start",
+                      flexDirection: "column",
+                      alignItems: "flex-start"
+                    }}>
+                      <p className="itemtext">{item.name}</p>
+                      {item.selectedOptions.toppings && item.selectedOptions.toppings.length > 0 && (
+                        <small style={{ fontSize: "0.8em", color: "#666" }}>
+                          Toppings: {item.selectedOptions.toppings.join(", ")}
+                        </small>
+                      )}
+                      <small style={{ fontSize: "0.8em", color: "#666" }}>
+                        Crust: {item.selectedOptions.crust}
+                      </small>
+                    </td>
+                    <td className="tableitem">
+                      <p className="itemtext">{item.quantity}</p>
+                    </td>
+                    <td className="tableitem">
+                      <p className="itemtext">${item.totalPrice.toFixed(2)}</p>
+                    </td>
+                  </tr>
+                  
+                  {item.items && item.items.map((subItem, subIndex) => (
+                    <tr key={`${index}-${subIndex}`} className="service">
+                      <td className="tableitem" style={{
+                        display: "flex",
+                        justifyContent: "start",
+                        paddingLeft: "20px"
+                      }}>
+                        <p className="itemtext" style={{ fontStyle: "italic" }}>+ {subItem.name}</p>
+                      </td>
+                      <td className="tableitem">
+                        <p className="itemtext">{subItem.quantity}</p>
+                      </td>
+                      <td className="tableitem">
+                        <p className="itemtext">${subItem.totalPrice?.toFixed(2) || "0.00"}</p>
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
 
               <tr className="tabletitle">
                 <td></td>
                 <td className="Rate">
-                  <h4>Tip</h4>
+                  <h4>Payment Method</h4>
                 </td>
                 <td className="payment">
-                  <h4>${payment.tip.toFixed(2)}</h4>
+                  <h4>{paymentInfo.method} {paymentInfo.last4 ? `(•••• ${paymentInfo.last4})` : ''}</h4>
                 </td>
               </tr>
 
@@ -99,7 +118,7 @@ const Receipt = ({ order }) => {
                   <h4>Total</h4>
                 </td>
                 <td className="payment">
-                  <h4>${(payment.amountPaid + payment.tip).toFixed(2)}</h4>
+                  <h4>${orderTotal.toFixed(2)}</h4>
                 </td>
               </tr>
             </tbody>
@@ -108,9 +127,11 @@ const Receipt = ({ order }) => {
 
         <div id="legalcopy">
           <p className="legal">
-            <strong>Thank you for your business!</strong> Payment is expected
-            within 31 days. There will be a 5% interest charge per month on late
-            invoices.
+            <strong>Thank you for your business!</strong> 
+            <br />
+            Order ID: {id.substring(0, 8)}
+            <br />
+            Order Time: {new Date(order.createdAt).toLocaleString()}
           </p>
         </div>
       </div>
