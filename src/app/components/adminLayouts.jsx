@@ -15,6 +15,21 @@ const AdminLayout = ({ children }) => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const handleLogout = () => {
+    // Remove all auth-related items from localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("userData");
+
+    // If using cookies, remove them (install js-cookie first)
+    // Cookies.remove('auth_token');
+
+    // Redirect to login page
+    const router = useRouter();
+    router.push("/login");
+
+    // Optional: Force a full page refresh to reset app state
+    // window.location.href = '/login';
+  };
   useEffect(() => {
     axios
       .get("https://api.ohiostatepizzas.com/api/startup-check")
@@ -24,7 +39,7 @@ const AdminLayout = ({ children }) => {
       .catch((err) => {
         setStartUpCheck(false);
       });
-  },[]);
+  }, []);
 
   const links = [
     { name: "Dashboard", href: "/dashboard" },
@@ -87,17 +102,25 @@ const AdminLayout = ({ children }) => {
             </button>
             <h1 className="font-bold text-xl text-gray-800">{currentPage}</h1>
           </div>
-          <button className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
+          <button
+            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+            onClick={() => {
+              handleLogout;
+            }}
+          >
             Logout
           </button>
         </header>
 
         {/* Main Content */}
-        {startupCheck ?<>
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
-        <Toaster />
-        </> : "Server is not running" }
-      
+        {startupCheck ? (
+          <>
+            <main className="flex-1 overflow-y-auto p-6">{children}</main>
+            <Toaster />
+          </>
+        ) : (
+          "Server is not running"
+        )}
       </div>
     </div>
   );
