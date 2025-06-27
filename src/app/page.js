@@ -6,9 +6,9 @@ import AdminLayout from "./components/adminLayouts";
 export default function Home() {
   const [isLogin, setLoginStatus] = useState(null);
   const router = useRouter();
-  const baseURL = process.env.API_URL;
 
-  console.log(baseURL);
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;
+  console.log(apiUrl)
 
   useEffect(() => {
     // Check authentication status (you might want to use a more secure method)

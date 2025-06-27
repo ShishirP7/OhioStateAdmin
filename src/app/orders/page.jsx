@@ -1,9 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
-import Lottie from "lottie-react";
-import OrderAnimation from "../../../Assets/Preparing.json";
-import PackagingAnimation from "../../../Assets/Packaging.json";
 import Receipt from "../components/Recipt";
 import axios from "axios";
 

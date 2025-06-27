@@ -3,9 +3,8 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import axios from "axios";
 
 const AdminLayout = ({ children }) => {
@@ -18,13 +17,12 @@ const AdminLayout = ({ children }) => {
   };
 
   const handleLogout = () => {
-    
     // Remove all auth-related items from localStorage
     localStorage.removeItem("authToken");
 
     // If using cookies, remove them (install js-cookie first)
     // Cookies.remove('auth_token');
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
   useEffect(() => {
     axios
