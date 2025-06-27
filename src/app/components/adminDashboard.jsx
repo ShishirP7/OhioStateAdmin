@@ -38,7 +38,6 @@ const AdminRoles = () => {
       alert("Please fill in all fields.");
       return;
     }
-    alert("hello")
   };
 
   const handleEditStore = (store) => {
