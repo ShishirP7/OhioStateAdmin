@@ -1,28 +1,80 @@
-name: Deploy Frontend1 to Contabo
+name: 🚀 Deploy Frontend to Contabo VPS
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install dependencies and build
-        run: |
-          npm install
-          npm run build
-
-      - name: Deploy to Contabo (frontend1)
-        uses: appleboy/scp-action@master
+      - name: 🔐 SSH & Deploy Frontend
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          source: "build/*"
-          target: "/var/www/frontend1"
+          script: |
+            FRONTEND_DIR="/var/www/ohio-state-admin"
+            FRONTEND_REPO_URL="https://github.com/ShishirP7/OhioStateAdmin.git"
+            NGINX_DIR="/etc/nginx/sites-enabled"
+            
+            echo "🚀 Starting frontend deployment..."
+            
+            # Clone or pull the latest code
+            echo "📁 Checking if frontend folder exists..."
+            if [ -d "$FRONTEND_DIR" ]; then
+              echo "🔄 Frontend exists. Pulling latest code..."
+              cd $FRONTEND_DIR
+              git pull origin main
+            else
+              echo "📦 Cloning frontend project..."
+              git clone $FRONTEND_REPO_URL $FRONTEND_DIR
+              cd $FRONTEND_DIR
+            fi
+
+            # Install dependencies and build
+            echo "📦 Installing frontend dependencies..."
+            npm install
+            echo "🏗 Building frontend..."
+            npm run build
+
+            # Configure Nginx (assuming it's already installed)
+            echo "🔧 Configuring Nginx..."
+            sudo bash -c 'cat > /etc/nginx/sites-available/ohio-state-admin <<EOF
+            server {
+                listen 80;
+                server_name your-domain.com; # Replace with your domain or IP
+                
+                root $FRONTEND_DIR/build;
+                index index.html;
+                
+                location / {
+                    try_files \$uri /index.html;
+                }
+                
+                # If you have API routes to proxy to backend
+                location /api {
+                    proxy_pass http://localhost:3000; # Assuming backend runs on 3000
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host \$host;
+                    proxy_cache_bypass \$http_upgrade;
+                }
+            }
+            EOF'
+            
+            # Enable the site if not already enabled
+            if [ ! -f "/etc/nginx/sites-enabled/ohio-state-admin" ]; then
+              sudo ln -s /etc/nginx/sites-available/ohio-state-admin /etc/nginx/sites-enabled/
+            fi
+            
+            # Test and reload Nginx
+            sudo nginx -t
+            sudo systemctl restart nginx
+            
+            echo "✅ Frontend deployment completed!"
