@@ -3,7 +3,7 @@ import AdminLayout from '../components/adminLayouts'
 
 const Settings = () => {
   return (
-    <AdminLayout >This is Settings</AdminLayout>
+    <AdminLayout >This is Settings number 2</AdminLayout>
   )
 }
 
