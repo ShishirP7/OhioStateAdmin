@@ -41,32 +41,6 @@ jobs:
             npm install
             echo "🏗 Building frontend..."
             npm run build
-
-            # Configure Nginx (assuming it's already installed)
-            echo "🔧 Configuring Nginx..."
-            sudo bash -c 'cat > /etc/nginx/sites-available/ohio-state-admin <<EOF
-            server {
-                listen 80;
-                server_name your-domain.com; # Replace with your domain or IP
-                
-                root $FRONTEND_DIR/build;
-                index index.html;
-                
-                location / {
-                    try_files \$uri /index.html;
-                }
-                
-                # If you have API routes to proxy to backend
-                location /api {
-                    proxy_pass http://localhost:3000; # Assuming backend runs on 3000
-                    proxy_http_version 1.1;
-                    proxy_set_header Upgrade \$http_upgrade;
-                    proxy_set_header Connection 'upgrade';
-                    proxy_set_header Host \$host;
-                    proxy_cache_bypass \$http_upgrade;
-                }
-            }
-            EOF'
             
             # Enable the site if not already enabled
             if [ ! -f "/etc/nginx/sites-enabled/ohio-state-admin" ]; then
