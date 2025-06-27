@@ -1,9 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AdminDashboard from "./components/adminDashboard";
 import AdminLayout from "./components/adminLayouts";
-import Dashboard from "./dashboard/page";
 
 export default function Home() {
   const [isLogin, setLoginStatus] = useState(null);
