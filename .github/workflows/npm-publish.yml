@@ -1,53 +1,56 @@
-name: 🚀 Deploy Frontend to Contabo VPS
-
+name: 🚀 Deploy Frontend with Nginx Auto-Reload
 on:
   push:
-    branches:
-      - main
+    branches: main
+    paths:
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.css"
+      - "next.config.js"
+      - "package.json"
 
 jobs:
-  deploy-frontend:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🔐 SSH & Deploy Frontend
+      - name: 🔐 SSH Deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          port: 22
           script: |
+            # 1. Setup environment
             FRONTEND_DIR="/var/www/ohio-state-admin"
-            FRONTEND_REPO_URL="https://github.com/ShishirP7/OhioStateAdmin.git"
-            NGINX_DIR="/etc/nginx/sites-enabled"
-            
-            echo "🚀 Starting frontend deployment..."
-            
-            # Clone or pull the latest code
-            echo "📁 Checking if frontend folder exists..."
+            cd ~
+
+            # 2. Atomic deployment
             if [ -d "$FRONTEND_DIR" ]; then
-              echo "🔄 Frontend exists. Pulling latest code..."
+              echo "🔄 Updating existing deployment..."
               cd $FRONTEND_DIR
-              git pull origin main
+              git fetch --all
+              git reset --hard origin/main
             else
-              echo "📦 Cloning frontend project..."
-              git clone $FRONTEND_REPO_URL $FRONTEND_DIR
+              echo "📦 Fresh installation..."
+              git clone https://github.com/ShishirP7/OhioStateAdmin.git $FRONTEND_DIR
               cd $FRONTEND_DIR
             fi
 
-            # Install dependencies and build
-            echo "📦 Installing frontend dependencies..."
-            npm install
-            echo "🏗 Building frontend..."
+            # 3. Build process
+            npm ci
             npm run build
-            
-            # Enable the site if not already enabled
-            if [ ! -f "/etc/nginx/sites-enabled/ohio-state-admin" ]; then
-              sudo ln -s /etc/nginx/sites-available/ohio-state-admin /etc/nginx/sites-enabled/
+
+            # 4. PM2 management
+            pm2 restart next-frontend --update-env || \
+            pm2 start "npm run start" --name next-frontend
+
+            # 5. Conditional Nginx reload
+            if git diff --name-only HEAD~1 HEAD | grep -q 'next.config.js'; then
+              echo "🔧 Detected frontend config change - reloading Nginx"
+              sudo nginx -t && sudo systemctl reload nginx
             fi
-            
-            sudo nginx -t
-            sudo systemctl restart nginx
-            
-            echo "✅ Frontend deployment completed!"
+
+            # 6. Verification
+            echo "✅ Deployment status:"
+            curl -Is http://localhost:3000 | head -n 1
+            pm2 list
