@@ -1,23 +1,27 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminDashboard from "./components/adminDashboard";
 import AdminLayout from "./components/adminLayouts";
+import Dashboard from "./dashboard/page";
 
 export default function Home() {
   const [isLogin, setLoginStatus] = useState(null);
   const router = useRouter();
+  const baseURL = process.env.API_URL;
+
+  console.log(baseURL);
 
   useEffect(() => {
     // Check authentication status (you might want to use a more secure method)
     const checkAuth = async () => {
       // Example: Check if there's a token in localStorage
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem("authToken");
       // Or you might want to make an API call to verify the token
-      
+
       if (!token) {
         setLoginStatus(false);
-        router.push('/login');
+        router.push("/login");
       } else {
         setLoginStatus(true);
       }
@@ -35,9 +39,7 @@ export default function Home() {
   if (isLogin) {
     return (
       <div>
-        <AdminLayout>
-          <AdminDashboard />
-        </AdminLayout>
+        <AdminLayout></AdminLayout>
       </div>
     );
   }

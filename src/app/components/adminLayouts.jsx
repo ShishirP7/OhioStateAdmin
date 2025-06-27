@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/router";
+
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 
@@ -16,23 +18,17 @@ const AdminLayout = ({ children }) => {
   };
 
   const handleLogout = () => {
+    
     // Remove all auth-related items from localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("userData");
+    localStorage.removeItem("authToken");
 
     // If using cookies, remove them (install js-cookie first)
     // Cookies.remove('auth_token');
-
-    // Redirect to login page
-    const router = useRouter();
-    router.push("/login");
-
-    // Optional: Force a full page refresh to reset app state
-    // window.location.href = '/login';
+    window.location.href = '/login';
   };
   useEffect(() => {
     axios
-      .get("https://api.ohiostatepizzas.com/api/startup-check")
+      .get(`http://66.94.97.165:4001/api/startup-check`)
       .then((res) => {
         setStartUpCheck(true);
       })
@@ -105,7 +101,7 @@ const AdminLayout = ({ children }) => {
           <button
             className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
             onClick={() => {
-              handleLogout;
+              handleLogout();
             }}
           >
             Logout
