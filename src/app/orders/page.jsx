@@ -156,7 +156,7 @@ const Orders = () => {
 
   useEffect(() => {
     axios
-      .get("http://api.ohiostatepizzas.com/api/orders/")
+      .get("https://api.ohiostatepizzas.com/api/orders/")
       .then((res) => {
         console.log(res);
         setOrders(res.data.data);
@@ -171,7 +171,7 @@ const Orders = () => {
 
       console.log(selectedOrder)
       // Update on server
-      await axios.put(`http://api.ohiostatepizzas.com/api/orders/${selectedOrder.id}`, {
+      await axios.put(`https://api.ohiostatepizzas.com/api/orders/${selectedOrder.id}`, {
         status: newStatus,
       });
 

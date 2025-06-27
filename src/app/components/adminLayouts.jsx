@@ -17,7 +17,7 @@ const AdminLayout = ({ children }) => {
 
   useEffect(() => {
     axios
-      .get("http://api.ohiostatepizzas.com/api/startup-check")
+      .get("https://api.ohiostatepizzas.com/api/startup-check")
       .then((res) => {
         setStartUpCheck(true);
       })
