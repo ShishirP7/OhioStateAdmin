@@ -5,8 +5,8 @@ import { Formik, Form, Field, FieldArray, getIn } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 
-const API_URL = "http://66.94.97.165:4001/api/menuitems/";
-const STORES_URL = "http://66.94.97.165:4001/api/stores";
+const API_URL = "http://api.ohiostatepizzas.com/api/menuitems/";
+const STORES_URL = "http://api.ohiostatepizzas.com/api/stores";
 
 const 
 defaultOptions = {

@@ -31,4 +31,4 @@ jobs:
               pm2 restart next-admin || pm2 start "npm run start" --name next-admin
             fi
             sudo nginx -t && sudo systemctl restart nginx
-            echo "Admin Site deployed successfully"
+            echo "AdminSite deployed successfully"
