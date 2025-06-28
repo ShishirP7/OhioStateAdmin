@@ -113,7 +113,7 @@ const AdminLayout = ({ children }) => {
             <Toaster />
           </>
         ) : (
-          "Server is not running"
+          "Loading"
         )}
       </div>
     </div>
