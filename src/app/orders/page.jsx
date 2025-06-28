@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import Receipt from "../components/Recipt";
 import axios from "axios";
+import useSound from "use-sound"; // NEW
 
 // Sample data in the new format
 const pizzaOrders = {
@@ -74,83 +75,46 @@ const Orders = () => {
   const [showModal, setShowModal] = useState(false);
   const [orders, setOrders] = useState(pizzaOrders.data);
   const [isOpen, setIsOpen] = useState(false);
+  const [alarmActive, setAlarmActive] = useState(false);
+  const [orderIds, setOrderIds] = useState(new Set());
   const printRef = useRef();
+
+  // Notification sound from URL
+  const [playNotification] = useSound(
+    "https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3",
+    {
+      volume: 0.5,
+    }
+  );
 
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
-
     const win = window.open("", "", "width=380,height=600");
-
     win.document.write(`
-    <html>
-      <head>
-        <title>Print Receipt</title>
-        <style>
-  @media print {
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      width: 80mm;
-      font-family: monospace;
-      font-size: 12px;
-      background: #fff;
-    }
-
-    #invoice-POS {
-      width: 80mm;
-      padding: 0;
-      margin: 0 auto;
-      margin-top:-20px;
-    }
-
-    #invoice-POS #top {
-      padding-top: 0;
-    }
-
-    .logo {
-      width: 60px;
-      height: 60px;
-      background-size: contain;
-      margin: 0 auto;
-    }
-
-    h2, h3, p {
-      margin: 0;
-      padding: 2px 0;
-      text-align: center;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    td {
-      padding: 4px 0;
-      text-align: left;
-    }
-
-    .legal {
-      font-size: 10px;
-      margin-top: 8px;
-      text-align: center;
-    }
-  }
-</style>
-      </head>
-      <body onload="window.print(); window.close();">
-        ${printContents}
-      </body>
-    </html>
-  `);
-
+      <html>
+        <head>
+          <title>Print Receipt</title>
+          <style>
+            @media print {
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { width: 80mm; font-family: monospace; font-size: 12px; background: #fff; }
+              #invoice-POS { width: 80mm; padding: 0; margin: 0 auto; margin-top:-20px; }
+              h2, h3, p { margin: 0; padding: 2px 0; text-align: center; }
+              table { width: 100%; border-collapse: collapse; }
+              td { padding: 4px 0; text-align: left; }
+              .legal { font-size: 10px; margin-top: 8px; text-align: center; }
+            }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          ${printContents}
+        </body>
+      </html>
+    `);
     win.document.close();
   };
 
+  // Continuous alarm if active
   useEffect(() => {
     axios
       .get("https://66.94.97.165:4001/api/orders/")
@@ -165,6 +129,10 @@ const Orders = () => {
 
   const handleChange = async (newStatus) => {
     try {
+      await axios.put(
+        `http://66.94.97.165:4001/api/orders/${selectedOrder.id}`,
+        { status: newStatus }
+      );
 
       console.log(selectedOrder)
       // Update on server
@@ -178,10 +146,14 @@ const Orders = () => {
       );
       setOrders(updatedOrders);
       setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+
+      const hasPending = updatedOrders.some(
+        (order) => order.status.toLowerCase() === "pending"
+      );
+      setAlarmActive(hasPending);
     } catch (err) {
       console.error("Failed to update status:", err);
     }
-
     setIsOpen(false);
   };
 
@@ -190,13 +162,10 @@ const Orders = () => {
     setShowModal(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-  };
+  const closeModal = () => setShowModal(false);
 
   const statusMessage = () => {
     if (!selectedOrder) return "";
-
     switch (selectedOrder.status.toLowerCase()) {
       case "pending":
         return "New order received. Awaiting action.";
@@ -218,7 +187,7 @@ const Orders = () => {
   return (
     <AdminLayout>
       <div className="container p-2 mx-auto sm:p-4 text-white">
-        {/* Filters Grid */}
+        {/* Filter section */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="max-w pt-6">
             <div className="relative flex items-center border border-black w-full h-full rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
@@ -293,7 +262,6 @@ const Orders = () => {
             </select>
           </div>
         </div>
-
         {/* Orders Table */}
         <h2 className="mb-4 text-2xl font-semibold leading-tight text-black">
           Pizza Orders
@@ -316,7 +284,11 @@ const Orders = () => {
                 <tr
                   key={index}
                   onClick={() => handleRowClick(order)}
-                  className="cursor-pointer hover:bg-gray-100"
+                  className={`cursor-pointer hover:bg-gray-100 ${
+                    order.status.toLowerCase() === "pending"
+                      ? "animate-pulse bg-yellow-100 font-bold"
+                      : ""
+                  }`}
                 >
                   <td className="px-3 py-2 font-medium text-md">
                     {order.id.substring(0, 8)}
@@ -381,7 +353,6 @@ const Orders = () => {
                     </button>
                   </div>
 
-                  {/* Dropdown Menu */}
                   <div
                     className={`absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 transition-all duration-200 ${
                       isOpen
@@ -428,28 +399,26 @@ const Orders = () => {
               </h2>
 
               <div className="space-y-4 text-sm sm:text-base">
-                {/* Customer Info */}
                 <div>
                   <h3 className="font-semibold text-lg mb-1 text-red-600">
                     Customer Details
                   </h3>
                   <p>
                     <strong>Name:</strong> {selectedOrder.billingInfo.firstName}{" "}
-                    {selectedOrder.billingInfo.lastName}
+                    {selectedOrder?.billingInfo?.lastName}
                   </p>
                   <p>
-                    <strong>Phone:</strong> {selectedOrder.billingInfo.phone}
+                    <strong>Phone:</strong> {selectedOrder?.billingInfo?.phone}
                   </p>
                   <p>
-                    <strong>Email:</strong> {selectedOrder.billingInfo.email}
+                    <strong>Email:</strong> {selectedOrder?.billingInfo?.email}
                   </p>
                   <p>
                     <strong>Address:</strong>{" "}
-                    {selectedOrder.carryoutInfo.address}
+                    {selectedOrder?.carryoutInfo?.address}
                   </p>
                 </div>
 
-                {/* Order Items */}
                 <div>
                   <h3 className="font-semibold text-lg mb-1 text-red-600">
                     Order Items
@@ -457,7 +426,7 @@ const Orders = () => {
                   {selectedOrder.cartItems.map((item, index) => (
                     <div key={index} className="mb-4">
                       <p>
-                        <strong>Item:</strong> {item.name} ×{item.quantity}
+                        <strong>Item:</strong> {item.name} ×{item?.quantity}
                       </p>
                       <p>
                         <strong>Price:</strong> ${item.totalPrice.toFixed(2)}
@@ -476,7 +445,6 @@ const Orders = () => {
                   ))}
                 </div>
 
-                {/* Payment Info */}
                 <div>
                   <h3 className="font-semibold text-lg mb-1 text-red-600">
                     Payment Summary
@@ -501,15 +469,12 @@ const Orders = () => {
                   </strong>
                 </div>
                 <div>
-                  {/* Print Button */}
                   <button
                     onClick={handlePrint}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4"
                   >
                     🖨️ Print Receipt
                   </button>
-
-                  {/* Printable Area */}
                   <div
                     ref={printRef}
                     className="p-4 bg-white text-black rounded shadow hidden"
