@@ -22,7 +22,7 @@ const LoginForm = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://66.94.97.165:4001/api/employees/login', {
+      const response = await fetch('https://66.94.97.165:4001/api/employees/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

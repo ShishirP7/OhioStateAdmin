@@ -153,7 +153,7 @@ const Orders = () => {
 
   useEffect(() => {
     axios
-      .get("http://66.94.97.165:4001/api/orders/")
+      .get("https://66.94.97.165:4001/api/orders/")
       .then((res) => {
         console.log(res);
         setOrders(res.data.data);
@@ -168,7 +168,7 @@ const Orders = () => {
 
       console.log(selectedOrder)
       // Update on server
-      await axios.put(`http://66.94.97.165:4001/api/orders/${selectedOrder.id}`, {
+      await axios.put(`https://66.94.97.165:4001/api/orders/${selectedOrder.id}`, {
         status: newStatus,
       });
 
