@@ -26,7 +26,7 @@ const AdminLayout = ({ children }) => {
   };
   useEffect(() => {
     axios
-      .get(`https://66.94.97.165:4001/api/startup-check`)
+      .get(`http://66.94.97.165:4001/api/startup-check`)
       .then((res) => {
         setStartUpCheck(true);
       })
