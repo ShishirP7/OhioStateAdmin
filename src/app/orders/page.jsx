@@ -116,16 +116,44 @@ const Orders = () => {
 
   // Continuous alarm if active
   useEffect(() => {
-    axios
-      .get("http://66.94.97.165:4001/api/orders/")
-      .then((res) => {
-        console.log(res);
-        setOrders(res.data.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+    if (!alarmActive) return;
+    const alarmInterval = setInterval(() => {
+      playNotification();
+    }, 5000);
+    return () => clearInterval(alarmInterval);
+  }, [alarmActive, playNotification]);
+
+  // Poll server every 15 seconds
+  useEffect(() => {
+    const fetchOrders = () => {
+      axios
+        .get("http://66.94.97.165:4001/api/orders/")
+        .then((res) => {
+          const fetchedOrders = res.data.data;
+          const newIds = new Set(fetchedOrders.map((o) => o.id));
+          const isNewOrder = [...newIds].some((id) => !orderIds.has(id));
+
+          setOrders(fetchedOrders);
+          setOrderIds(newIds);
+
+          const hasPending = fetchedOrders.some(
+            (order) => order.status.toLowerCase() === "pending"
+          );
+          setAlarmActive(hasPending);
+
+          if (isNewOrder && hasPending) {
+            playNotification();
+          }
+        })
+        .catch((err) => {
+          console.error("Error polling orders:", err);
+        });
+    };
+
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 15000);
+    return () => clearInterval(interval);
+  }, [orderIds, playNotification]);
 
   const handleChange = async (newStatus) => {
     try {
@@ -134,13 +162,6 @@ const Orders = () => {
         { status: newStatus }
       );
 
-      console.log(selectedOrder)
-      // Update on server
-      await axios.put(`http://66.94.97.165:4001/api/orders/${selectedOrder.id}`, {
-        status: newStatus,
-      });
-
-      // Update local state
       const updatedOrders = orders.map((order) =>
         order.id === selectedOrder.id ? { ...order, status: newStatus } : order
       );
