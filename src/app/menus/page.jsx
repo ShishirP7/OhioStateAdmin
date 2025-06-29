@@ -5,8 +5,13 @@ import { Formik, Form, Field, FieldArray, getIn } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 
+<<<<<<< HEAD
 const API_URL = "api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "api.ohiostatepizzas.com/api/stores";
+=======
+const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
+const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
+>>>>>>> 6d3012232e0d127f706414a91ccfae66ea0d74e3
 
 const 
 defaultOptions = {

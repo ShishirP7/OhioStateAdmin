@@ -26,8 +26,7 @@ const Stores = () => {
   };
 
   const getAllStores = () => {
-    axios
-      .get("api.ohiostatepizzas.com/api/stores")
+    axios.get("https://api.ohiostatepizzas.com/api/stores")
       .then((res) => {
         setStores(res.data);
       })
@@ -58,8 +57,7 @@ const Stores = () => {
 
     if (editingStore) {
       console.log(stores);
-      axios
-        .put(`api.ohiostatepizzas.com/api/stores/${storeData._id}`, storeData)
+      axios.put(`https://api.ohiostatepizzas.com/api/stores/${storeData._id}`, storeData)
         .then((res) => {
           toast.success("Store updated sucessfully.");
           getAllStores();
@@ -69,8 +67,7 @@ const Stores = () => {
           toast.error(err.response.data.error);
         });
     } else {
-      axios
-        .post("api.ohiostatepizzas.com/api/stores", storeData)
+      axios.post("https://api.ohiostatepizzas.com/api/stores", storeData)
         .then((res) => {
           toast.success("Store added sucessfully.");
           getAllStores();
@@ -90,8 +87,7 @@ const Stores = () => {
 
   const handleDeleteStore = (id) => {
     if (window.confirm("Are you sure you want to delete this store?")) {
-      axios
-        .delete(`api.ohiostatepizzas.com/api/stores/${id}`)
+      axios.delete(`https://api.ohiostatepizzas.com/api/stores/${id}`)
         .then((res) => {
           toast.success("Store has been removed.");
           getAllStores();

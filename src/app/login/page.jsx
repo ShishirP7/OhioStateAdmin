@@ -19,10 +19,13 @@ const LoginForm = () => {
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    setError(null);
-    
+    setError(null);    
     try {
+<<<<<<< HEAD
       const response = await fetch('api.ohiostatepizzas.com/api/employees/login', {
+=======
+      const response = await fetch('https://api.ohiostatepizzas.com/api/employees/login', {
+>>>>>>> 6d3012232e0d127f706414a91ccfae66ea0d74e3
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

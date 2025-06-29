@@ -3,8 +3,9 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import axios from "axios";
 
-const API_URL = "api.ohiostatepizzas.com/api/specials";
-const MENU_API_URL = "api.ohiostatepizzas.com/api/menuitems"; // Assuming this exists
+
+const API_URL = "https://api.ohiostatepizzas.com/api/specials";
+const MENU_API_URL = "https://api.ohiostatepizzas.com/api/menuitems"; // Assuming this exists
 
 const Combos = () => {
   const [combos, setCombos] = useState([]);
