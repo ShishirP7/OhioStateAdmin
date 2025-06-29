@@ -39,7 +39,6 @@ const AdminRoles = () => {
       return;
     }
   };
-
   const handleEditStore = (store) => {
     setEditingStore(store);
     setStoreData({ ...store });
