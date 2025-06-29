@@ -246,7 +246,7 @@ const Orders = () => {
                 placeholder="Search something.."
               />
             </div>
-          </div>
+          </div>          
           
           <div>
             <label
