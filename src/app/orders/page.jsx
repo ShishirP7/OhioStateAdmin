@@ -76,16 +76,69 @@ const Orders = () => {
   const [orders, setOrders] = useState(pizzaOrders.data);
   const [isOpen, setIsOpen] = useState(false);
   const [alarmActive, setAlarmActive] = useState(false);
-  const [orderIds, setOrderIds] = useState(new Set());
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+  const orderIdsRef = useRef(new Set());
   const printRef = useRef();
 
-  // Notification sound from URL
   const [playNotification] = useSound(
     "https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3",
-    {
-      volume: 0.5,
-    }
+    { volume: 0.5 }
   );
+
+  // Track visibility
+  useEffect(() => {
+    const handleVisibility = () => setIsPageVisible(!document.hidden);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  // Alarm loop
+  useEffect(() => {
+    if (!alarmActive) return;
+    const alarmInterval = setInterval(() => {
+      playNotification();
+    }, 3000);
+    return () => clearInterval(alarmInterval);
+  }, [alarmActive, playNotification]);
+
+  // Poll server every 30 seconds only if visible
+  useEffect(() => {
+    if (!isPageVisible) return;
+
+    const POLL_INTERVAL = 30000;
+
+    const fetchOrders = () => {
+      axios
+        .get("http://66.94.97.165:4001/api/orders/")
+        .then((res) => {
+          const fetchedOrders = res.data.data;
+          const newIds = new Set(fetchedOrders.map((o) => o.id));
+          const isNewOrder = [...newIds].some(
+            (id) => !orderIdsRef.current.has(id)
+          );
+
+          setOrders(fetchedOrders);
+          orderIdsRef.current = newIds;
+
+          const hasPending = fetchedOrders.some(
+            (order) => order.status.toLowerCase() === "pending"
+          );
+          setAlarmActive(hasPending);
+
+          if (isNewOrder && hasPending) {
+            playNotification();
+          }
+        })
+        .catch((err) => {
+          console.error("Error polling orders:", err);
+        });
+    };
+
+    fetchOrders();
+    const interval = setInterval(fetchOrders, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [isPageVisible, playNotification]);
 
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
@@ -113,47 +166,6 @@ const Orders = () => {
     `);
     win.document.close();
   };
-
-  // Continuous alarm if active
-  useEffect(() => {
-    if (!alarmActive) return;
-    const alarmInterval = setInterval(() => {
-      playNotification();
-    }, 5000);
-    return () => clearInterval(alarmInterval);
-  }, [alarmActive, playNotification]);
-
-  // Poll server every 15 seconds
-  useEffect(() => {
-    const fetchOrders = () => {
-      axios
-        .get("http://66.94.97.165:4001/api/orders/")
-        .then((res) => {
-          const fetchedOrders = res.data.data;
-          const newIds = new Set(fetchedOrders.map((o) => o.id));
-          const isNewOrder = [...newIds].some((id) => !orderIds.has(id));
-
-          setOrders(fetchedOrders);
-          setOrderIds(newIds);
-
-          const hasPending = fetchedOrders.some(
-            (order) => order.status.toLowerCase() === "pending"
-          );
-          setAlarmActive(hasPending);
-
-          if (isNewOrder && hasPending) {
-            playNotification();
-          }
-        })
-        .catch((err) => {
-          console.error("Error polling orders:", err);
-        });
-    };
-
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 15000);
-    return () => clearInterval(interval);
-  }, [orderIds, playNotification]);
 
   const handleChange = async (newStatus) => {
     try {
