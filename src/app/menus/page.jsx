@@ -7,7 +7,6 @@ import axios from "axios";
 
 const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
-
 const 
 defaultOptions = {
   sizes: { isMultiple: false, values: [] },
