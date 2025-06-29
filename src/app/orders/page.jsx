@@ -109,7 +109,7 @@ const Orders = () => {
 
     const fetchOrders = () => {
       axios
-        .get("http://66.94.97.165:4001/api/orders/")
+        .get("api.ohiostatepizzas.com/api/orders/")
         .then((res) => {
           const fetchedOrders = res.data.data;
           const newIds = new Set(fetchedOrders.map((o) => o.id));
@@ -169,7 +169,7 @@ const Orders = () => {
   const handleChange = async (newStatus) => {
     try {
       await axios.put(
-        `http://66.94.97.165:4001/api/orders/${selectedOrder.id}`,
+        `api.ohiostatepizzas.com/api/orders/${selectedOrder.id}`,
         { status: newStatus }
       );
 
