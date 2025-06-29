@@ -109,7 +109,7 @@ const Orders = () => {
 
     const fetchOrders = () => {
       axios
-        .get("api.ohiostatepizzas.com/api/orders/")
+        .get("https://api.ohiostatepizzas.com/api/orders/")
         .then((res) => {
           const fetchedOrders = res.data.data;
           const newIds = new Set(fetchedOrders.map((o) => o.id));
@@ -169,7 +169,7 @@ const Orders = () => {
   const handleChange = async (newStatus) => {
     try {
       await axios.put(
-        `api.ohiostatepizzas.com/api/orders/${selectedOrder.id}`,
+        `https://api.ohiostatepizzas.com/api/orders/${selectedOrder.id}`,
         { status: newStatus }
       );
 
