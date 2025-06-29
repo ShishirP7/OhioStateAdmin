@@ -16,7 +16,6 @@ const LoginForm = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
-
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError(null);    
