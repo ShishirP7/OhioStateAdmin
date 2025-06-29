@@ -11,8 +11,11 @@ const STORES_URL = "api.ohiostatepizzas.com/api/stores";
 =======
 const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
+<<<<<<< HEAD
 >>>>>>> 6d3012232e0d127f706414a91ccfae66ea0d74e3
 
+=======
+>>>>>>> e791644b54e112a46da0ce3b972bcd1f0d32cb63
 const 
 defaultOptions = {
   sizes: { isMultiple: false, values: [] },
