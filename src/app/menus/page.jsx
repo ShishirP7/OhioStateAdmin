@@ -5,19 +5,10 @@ import { Formik, Form, Field, FieldArray, getIn } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 
-<<<<<<< HEAD
 const API_URL = "api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "api.ohiostatepizzas.com/api/stores";
-=======
-const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
-const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
-<<<<<<< HEAD
->>>>>>> 6d3012232e0d127f706414a91ccfae66ea0d74e3
 
-=======
->>>>>>> e791644b54e112a46da0ce3b972bcd1f0d32cb63
-const 
-defaultOptions = {
+const defaultOptions = {
   sizes: { isMultiple: false, values: [] },
   addOns: { isMultiple: false, values: [] },
   crusts: { isMultiple: false, values: [] },
@@ -26,7 +17,7 @@ defaultOptions = {
   veggies: { isMultiple: false, values: [] },
   dips: { isMultiple: false, values: [] },
   flavors: { isMultiple: false, values: [] },
-  extras: { isMultiple: false, values: [] }
+  extras: { isMultiple: false, values: [] },
 };
 
 const menuValidationSchema = Yup.object().shape({
@@ -36,7 +27,7 @@ const menuValidationSchema = Yup.object().shape({
   price: Yup.number().required("Price is required").positive(),
   status: Yup.string().required(),
   options: Yup.object(),
-  availabilityByStore: Yup.object()
+  availabilityByStore: Yup.object(),
 });
 
 const NestedOptionFieldArray = ({ name, label }) => (
@@ -44,7 +35,8 @@ const NestedOptionFieldArray = ({ name, label }) => (
     <div className="flex justify-between items-center mb-1">
       <h4 className="font-semibold">{label}</h4>
       <label className="text-sm ml-2">
-        <Field name={`${name}.isMultiple`} type="checkbox" className="ml-2" /> Multiple
+        <Field name={`${name}.isMultiple`} type="checkbox" className="ml-2" />{" "}
+        Multiple
       </label>
     </div>
     <FieldArray name={`${name}.values`}>
@@ -69,14 +61,18 @@ const NestedOptionFieldArray = ({ name, label }) => (
                   type="button"
                   onClick={() => remove(index)}
                   className="text-red-500"
-                >✕</button>
+                >
+                  ✕
+                </button>
               </div>
             ))}
             <button
               type="button"
               onClick={() => push({ label: "", priceModifier: 0 })}
               className="bg-green-500 text-white px-2 py-1 rounded text-xs mt-1"
-            >+ Add {label}</button>
+            >
+              + Add {label}
+            </button>
           </>
         );
       }}
@@ -90,11 +86,16 @@ const getFieldsForCategory = (category) => {
   const sides = ["sizes", "dips"];
   const burgers = ["sizes", "addOns", "sauces"];
   switch (category) {
-    case "Pizzas": return pizza;
-    case "Drinks": return drinks;
-    case "Sides": return sides;
-    case "Burgers": return burgers;
-    default: return ["sizes", "addOns"];
+    case "Pizzas":
+      return pizza;
+    case "Drinks":
+      return drinks;
+    case "Sides":
+      return sides;
+    case "Burgers":
+      return burgers;
+    default:
+      return ["sizes", "addOns"];
   }
 };
 
@@ -172,7 +173,9 @@ const Menus = () => {
           <button
             onClick={() => openModal()}
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-          >Add New Item</button>
+          >
+            Add New Item
+          </button>
         </div>
 
         <div className="overflow-x-auto bg-white rounded shadow">
@@ -197,11 +200,15 @@ const Menus = () => {
                     <button
                       onClick={() => openModal(item)}
                       className="text-blue-500 hover:underline"
-                    >Edit</button>
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => handleDelete(item._id)}
                       className="text-red-500 hover:underline"
-                    >Delete</button>
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -225,25 +232,46 @@ const Menus = () => {
                   image: currentItem?.image || "",
                   options: currentItem?.options || defaultOptions,
                   availabilityByStore: stores.reduce((acc, store) => {
-                    acc[store._id] = currentItem?.availabilityByStore?.[store._id] || "Unavailable";
+                    acc[store._id] =
+                      currentItem?.availabilityByStore?.[store._id] ||
+                      "Unavailable";
                     return acc;
-                  }, {})
+                  }, {}),
                 }}
                 validationSchema={menuValidationSchema}
                 onSubmit={handleSave}
               >
                 {({ values, setFieldValue }) => (
                   <Form className="space-y-3">
-                    <Field name="name" placeholder="Name" className="w-full border px-3 py-2 rounded" />
-                    <Field as="textarea" name="description" placeholder="Description" className="w-full border px-3 py-2 rounded" />
-                    <Field name="category" as="select" className="w-full border px-3 py-2 rounded">
+                    <Field
+                      name="name"
+                      placeholder="Name"
+                      className="w-full border px-3 py-2 rounded"
+                    />
+                    <Field
+                      as="textarea"
+                      name="description"
+                      placeholder="Description"
+                      className="w-full border px-3 py-2 rounded"
+                    />
+                    <Field
+                      name="category"
+                      as="select"
+                      className="w-full border px-3 py-2 rounded"
+                    >
                       <option value="">Select Category</option>
                       <option value="Pizzas">Pizzas</option>
                       <option value="Burgers">Burgers</option>
                       <option value="Drinks">Drinks</option>
                       <option value="Sides">Sides</option>
                     </Field>
-                    <Field name="price" type="number" step="0.01" placeholder="Price" className="w-full border px-3 py-2 rounded" />
+                    <Field
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      placeholder="Price"
+                      className="w-full border px-3 py-2 rounded"
+                    />
 
                     {previewImage && (
                       <div className="mb-2">
@@ -271,7 +299,11 @@ const Menus = () => {
                       }}
                       className="block border px-3 py-2 rounded w-full"
                     />
-                    <Field as="select" name="status" className="w-full border px-3 py-2 rounded">
+                    <Field
+                      as="select"
+                      name="status"
+                      className="w-full border px-3 py-2 rounded"
+                    >
                       <option value="Available">Available</option>
                       <option value="Out of Stock">Out of Stock</option>
                     </Field>
@@ -288,11 +320,22 @@ const Menus = () => {
                     </div>
 
                     <div className="mt-4 border-t pt-2">
-                      <h3 className="text-lg font-bold">Availability By Store</h3>
+                      <h3 className="text-lg font-bold">
+                        Availability By Store
+                      </h3>
                       {stores.map((store) => (
-                        <div key={store._id} className="flex justify-between items-center mb-1">
-                          <label className="flex-1 text-sm text-gray-700">{store.name}</label>
-                          <Field as="select" name={`availabilityByStore.${store._id}`} className="border rounded px-2 py-1">
+                        <div
+                          key={store._id}
+                          className="flex justify-between items-center mb-1"
+                        >
+                          <label className="flex-1 text-sm text-gray-700">
+                            {store.name}
+                          </label>
+                          <Field
+                            as="select"
+                            name={`availabilityByStore.${store._id}`}
+                            className="border rounded px-2 py-1"
+                          >
                             <option value="Available">Available</option>
                             <option value="Unavailable">Unavailable</option>
                           </Field>
@@ -301,8 +344,19 @@ const Menus = () => {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                      <button type="button" onClick={closeModal} className="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100">Cancel</button>
-                      <button type="submit" className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Save</button>
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Save
+                      </button>
                     </div>
                   </Form>
                 )}
@@ -310,7 +364,10 @@ const Menus = () => {
             </div>
 
             {showImageModal && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setShowImageModal(false)}>
+              <div
+                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                onClick={() => setShowImageModal(false)}
+              >
                 <img
                   src={previewImage}
                   alt="Large preview"
