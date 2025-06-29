@@ -76,7 +76,7 @@ const Orders = () => {
   const [orders, setOrders] = useState(pizzaOrders.data);
   const [isOpen, setIsOpen] = useState(false);
   const [alarmActive, setAlarmActive] = useState(false);
-  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+  const [isPageVisible, setIsPageVisible] = useState(true);
   const orderIdsRef = useRef(new Set());
   const printRef = useRef();
 
@@ -87,11 +87,10 @@ const Orders = () => {
 
   // Track visibility
   useEffect(() => {
-    const handleVisibility = () => setIsPageVisible(!document.hidden);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
+  const handleVisibility = () => setIsPageVisible(!document.hidden);
+  document.addEventListener("visibilitychange", handleVisibility);
+  return () => document.removeEventListener("visibilitychange", handleVisibility);
+}, []);
 
   // Alarm loop
   useEffect(() => {
