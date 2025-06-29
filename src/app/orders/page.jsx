@@ -248,7 +248,6 @@ const Orders = () => {
               />
             </div>
           </div>
-
           <div>
             <label
               htmlFor="pizzaType"
