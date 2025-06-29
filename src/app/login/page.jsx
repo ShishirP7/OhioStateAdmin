@@ -19,8 +19,7 @@ const LoginForm = () => {
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    setError(null);
-    
+    setError(null);    
     try {
       const response = await fetch('http://66.94.97.165:4001/api/employees/login', {
         method: 'POST',
