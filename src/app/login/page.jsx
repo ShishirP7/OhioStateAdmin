@@ -21,7 +21,7 @@ const LoginForm = () => {
     setIsLoading(true);
     setError(null);    
     try {
-      const response = await fetch('http://66.94.97.165:4001/api/employees/login', {
+      const response = await fetch('https://api.ohiostatepizzas.com/api/employees/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
