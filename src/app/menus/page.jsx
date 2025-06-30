@@ -106,6 +106,7 @@ const Menus = () => {
   const [currentItem, setCurrentItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedStore, setSelectedStore] = useState("all");
 
   const fetchMenus = async () => {
     try {
@@ -142,6 +143,15 @@ const Menus = () => {
     setPreviewImage(null);
   };
 
+  const getFilteredMenus = () => {
+    if (selectedStore === "all") return menus;
+
+    return menus.map((item) => ({
+      ...item,
+      status: item.availabilityByStore?.[selectedStore] || "Unavailable",
+    }));
+  };
+
   const handleSave = async (values) => {
     try {
       if (currentItem?._id) {
@@ -165,6 +175,8 @@ const Menus = () => {
     }
   };
 
+  console.log(menus);
+
   return (
     <AdminLayout>
       <div className="p-4">
@@ -177,6 +189,38 @@ const Menus = () => {
             Add New Item
           </button>
         </div>
+        <div className="w-100">
+          <form className="w-full p-4 ml-[-15px]">
+            <fieldset>
+              <div className="relative border border-gray-300 text-gray-800 bg-white shadow-lg">
+                <select
+                  className="appearance-none w-full py-1 px-2 bg-white"
+                  name="whatever"
+                  id="frm-whatever"
+                  value={selectedStore}
+                  onChange={(e) => setSelectedStore(e.target.value)}
+                >
+                  <option value="all">All stores</option>
+                  {stores.map((store) => (
+                    <option key={store._id} value={store._id}>
+                      {store.name}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-2 text-gray-700 border-l">
+                  <svg
+                    className="h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
 
         <div className="overflow-x-auto bg-white rounded shadow">
           <table className="min-w-full text-sm">
@@ -185,17 +229,22 @@ const Menus = () => {
                 <th className="p-3 text-left">Name</th>
                 <th className="p-3 text-left">Category</th>
                 <th className="p-3 text-left">Price</th>
-                <th className="p-3 text-left">Status</th>
+                {selectedStore !== "all" && (
+                  <th className="p-3 text-left">Status</th>
+                )}
                 <th className="p-3 text-left">Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {menus.map((item) => (
+              {getFilteredMenus().map((item) => (
                 <tr key={item._id}>
                   <td className="p-3">{item.name}</td>
                   <td className="p-3">{item.category}</td>
                   <td className="p-3">${item.price}</td>
-                  <td className="p-3">{item.status}</td>
+                  {selectedStore !== "all" && (
+                    <td className="p-3">{item.status}</td>
+                  )}
                   <td className="p-3 space-x-2">
                     <button
                       onClick={() => openModal(item)}
