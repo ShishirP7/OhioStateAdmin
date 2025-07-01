@@ -4,6 +4,7 @@ import AdminLayout from "../components/adminLayouts";
 import { Formik, Form, Field, FieldArray, getIn } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { FiDelete, FiEdit } from "react-icons/fi";
 
 const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
@@ -85,6 +86,9 @@ const Menus = () => {
     priceModifier: 0,
     isMultiple: false,
   });
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [deleteCategoryId, setDeleteCategoryId] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const fetchMenus = async () => {
     try {
@@ -164,16 +168,70 @@ const Menus = () => {
 
   const handleCreateCategory = async () => {
     try {
+      if (!newCategory.name.trim()) {
+        alert("Category name cannot be empty");
+        return;
+      }
       await axios.post(CATEGORIES_URL, newCategory);
       setNewCategory({ name: "", addons: [] });
       setCategoryModalOpen(false);
       fetchCategories();
     } catch (error) {
       console.error("Error creating category:", error);
+      alert("Error creating category. Please try again.");
+    }
+  };
+
+  const handleEditCategory = (category) => {
+    setEditingCategory(category);
+    setNewCategory({
+      name: category.name,
+      addons: category.addons || []
+    });
+    setCategoryModalOpen(true);
+  };
+
+  const handleUpdateCategory = async () => {
+    try {
+      if (!newCategory.name.trim()) {
+        alert("Category name cannot be empty");
+        return;
+      }
+      await axios.patch(`${CATEGORIES_URL}/${editingCategory._id}`, newCategory);
+      setEditingCategory(null);
+      setNewCategory({ name: "", addons: [] });
+      setCategoryModalOpen(false);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error updating category:", error);
+      alert("Error updating category. Please try again.");
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    try {
+      // Check if any menu items are using this category
+      const categoryToDelete = categories.find(c => c._id === deleteCategoryId);
+      const itemsInCategory = menus.filter(
+        item => item.category === categoryToDelete?.name
+      );
+      
+      
+      await axios.delete(`${CATEGORIES_URL}/${deleteCategoryId}`);
+      fetchCategories();
+      setConfirmDeleteOpen(false);
+      setDeleteCategoryId(null);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert("Error deleting category. Please try again.");
     }
   };
 
   const addAddonToCategory = () => {
+    if (!newAddon.name.trim()) {
+      alert("Addon name cannot be empty");
+      return;
+    }
     setNewCategory((prev) => ({
       ...prev,
       addons: [...prev.addons, newAddon],
@@ -333,7 +391,11 @@ const Menus = () => {
                       >
                         <option value="">Select Category</option>
                         {categories.map((cat) => (
-                          <option key={cat._id} value={cat.name}>
+                          <option
+                            key={cat._id}
+                            value={cat.name}
+                            className="flex justify-between items-center"
+                          >
                             {cat.name}
                           </option>
                         ))}
@@ -344,6 +406,39 @@ const Menus = () => {
                           + Add New Category
                         </option>
                       </Field>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const selectedCategory = categories.find(
+                            cat => cat.name === values.category
+                          );
+                          if (selectedCategory) {
+                            handleEditCategory(selectedCategory);
+                          }
+                        }}
+                        disabled={!values.category}
+                        className={`p-2 rounded ${!values.category ? 'text-gray-400' : 'text-blue-500 hover:bg-blue-50'}`}
+                        title="Edit Category"
+                      >
+                        <FiEdit size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const selectedCategory = categories.find(
+                            cat => cat.name === values.category
+                          );
+                          if (selectedCategory) {
+                            setDeleteCategoryId(selectedCategory._id);
+                            setConfirmDeleteOpen(true);
+                          }
+                        }}
+                        disabled={!values.category}
+                        className={`p-2 rounded ${!values.category ? 'text-gray-400' : 'text-red-500 hover:bg-red-50'}`}
+                        title="Delete Category"
+                      >
+                        <FiDelete size={16} />
+                      </button>
                     </div>
 
                     <Field
@@ -463,7 +558,9 @@ const Menus = () => {
         {categoryModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-[600px] shadow-lg max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-bold mb-4">Create New Category</h2>
+              <h2 className="text-lg font-bold mb-4">
+                {editingCategory ? "Edit Category" : "Create New Category"}
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -511,8 +608,31 @@ const Menus = () => {
                         placeholder="Addon Name"
                         className="border px-2 py-1 rounded col-span-2"
                       />
+                      <input
+                        type="number"
+                        value={newAddon.priceModifier}
+                        onChange={(e) =>
+                          setNewAddon({ 
+                            ...newAddon, 
+                            priceModifier: parseFloat(e.target.value) || 0 
+                          })
+                        }
+                        placeholder="Price"
+                        className="border px-2 py-1 rounded"
+                      />
                     </div>
                     <div className="flex items-center mt-2">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={newAddon.isMultiple}
+                          onChange={(e) =>
+                            setNewAddon({ ...newAddon, isMultiple: e.target.checked })
+                          }
+                          className="mr-2"
+                        />
+                        Allow multiple selections
+                      </label>
                       <button
                         onClick={addAddonToCategory}
                         className="ml-auto bg-green-500 text-white px-3 py-1 rounded text-sm"
@@ -525,18 +645,45 @@ const Menus = () => {
 
                 <div className="flex justify-end gap-2 mt-4">
                   <button
-                    onClick={() => setCategoryModalOpen(false)}
+                    onClick={() => {
+                      setCategoryModalOpen(false);
+                      setEditingCategory(null);
+                      setNewCategory({ name: "", addons: [] });
+                    }}
                     className="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleCreateCategory}
+                    onClick={editingCategory ? handleUpdateCategory : handleCreateCategory}
                     className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
-                    Save Category
+                    {editingCategory ? "Update" : "Save"} Category
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmDeleteOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+              <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
+              <p className="mb-4">Are you sure you want to delete this category? This action cannot be undone.</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setConfirmDeleteOpen(false)}
+                  className="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteCategory}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
