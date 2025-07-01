@@ -7,18 +7,7 @@ import axios from "axios";
 
 const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
-
-const defaultOptions = {
-  sizes: { isMultiple: false, values: [] },
-  addOns: { isMultiple: false, values: [] },
-  crusts: { isMultiple: false, values: [] },
-  sauces: { isMultiple: false, values: [] },
-  meats: { isMultiple: false, values: [] },
-  veggies: { isMultiple: false, values: [] },
-  dips: { isMultiple: false, values: [] },
-  flavors: { isMultiple: false, values: [] },
-  extras: { isMultiple: false, values: [] },
-};
+const CATEGORIES_URL = "https://api.ohiostatepizzas.com/api/category";
 
 const menuValidationSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
@@ -80,33 +69,22 @@ const NestedOptionFieldArray = ({ name, label }) => (
   </div>
 );
 
-const getFieldsForCategory = (category) => {
-  const pizza = ["sizes", "crusts", "sauces", "meats", "veggies", "extras"];
-  const drinks = ["sizes", "flavors"];
-  const sides = ["sizes", "dips"];
-  const burgers = ["sizes", "addOns", "sauces"];
-  switch (category) {
-    case "Pizzas":
-      return pizza;
-    case "Drinks":
-      return drinks;
-    case "Sides":
-      return sides;
-    case "Burgers":
-      return burgers;
-    default:
-      return ["sizes", "addOns"];
-  }
-};
-
 const Menus = () => {
   const [menus, setMenus] = useState([]);
   const [stores, setStores] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedStore, setSelectedStore] = useState("all");
+  const [newCategory, setNewCategory] = useState({ name: "", addons: [] });
+  const [newAddon, setNewAddon] = useState({
+    name: "",
+    priceModifier: 0,
+    isMultiple: false,
+  });
 
   const fetchMenus = async () => {
     try {
@@ -126,9 +104,19 @@ const Menus = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(CATEGORIES_URL);
+      setCategories(res.data);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
+
   useEffect(() => {
     fetchMenus();
     fetchStores();
+    fetchCategories();
   }, []);
 
   const openModal = (item = null) => {
@@ -145,7 +133,6 @@ const Menus = () => {
 
   const getFilteredMenus = () => {
     if (selectedStore === "all") return menus;
-
     return menus.map((item) => ({
       ...item,
       status: item.availabilityByStore?.[selectedStore] || "Unavailable",
@@ -175,7 +162,36 @@ const Menus = () => {
     }
   };
 
-  console.log(menus);
+  const handleCreateCategory = async () => {
+    try {
+      await axios.post(CATEGORIES_URL, newCategory);
+      setNewCategory({ name: "", addons: [] });
+      setCategoryModalOpen(false);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error creating category:", error);
+    }
+  };
+
+  const addAddonToCategory = () => {
+    setNewCategory((prev) => ({
+      ...prev,
+      addons: [...prev.addons, newAddon],
+    }));
+    setNewAddon({ name: "", priceModifier: 0, isMultiple: false });
+  };
+
+  const removeAddonFromCategory = (index) => {
+    setNewCategory((prev) => ({
+      ...prev,
+      addons: prev.addons.filter((_, i) => i !== index),
+    }));
+  };
+
+  const getFieldsForCategory = (categoryName) => {
+    const category = categories.find((cat) => cat.name === categoryName);
+    return category?.addons?.map((addon) => addon.name.toLowerCase()) || [];
+  };
 
   return (
     <AdminLayout>
@@ -189,14 +205,13 @@ const Menus = () => {
             Add New Item
           </button>
         </div>
+
         <div className="w-100">
           <form className="w-full p-4 ml-[-15px]">
             <fieldset>
               <div className="relative border border-gray-300 text-gray-800 bg-white shadow-lg">
                 <select
                   className="appearance-none w-full py-1 px-2 bg-white"
-                  name="whatever"
-                  id="frm-whatever"
                   value={selectedStore}
                   onChange={(e) => setSelectedStore(e.target.value)}
                 >
@@ -207,7 +222,6 @@ const Menus = () => {
                     </option>
                   ))}
                 </select>
-
                 <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-2 text-gray-700 border-l">
                   <svg
                     className="h-4 w-4"
@@ -235,7 +249,6 @@ const Menus = () => {
                 <th className="p-3 text-left">Actions</th>
               </tr>
             </thead>
-
             <tbody>
               {getFilteredMenus().map((item) => (
                 <tr key={item._id}>
@@ -279,13 +292,13 @@ const Menus = () => {
                   price: currentItem?.price || "",
                   status: currentItem?.status || "Available",
                   image: currentItem?.image || "",
-                  options: currentItem?.options || defaultOptions,
-                  availabilityByStore: stores.reduce((acc, store) => {
-                    acc[store._id] =
-                      currentItem?.availabilityByStore?.[store._id] ||
-                      "Unavailable";
-                    return acc;
-                  }, {}),
+                  options: currentItem?.options || {},
+                  availabilityByStore:
+                    currentItem?.availabilityByStore ||
+                    stores.reduce((acc, store) => {
+                      acc[store._id] = "Unavailable";
+                      return acc;
+                    }, {}),
                 }}
                 validationSchema={menuValidationSchema}
                 onSubmit={handleSave}
@@ -303,17 +316,36 @@ const Menus = () => {
                       placeholder="Description"
                       className="w-full border px-3 py-2 rounded"
                     />
-                    <Field
-                      name="category"
-                      as="select"
-                      className="w-full border px-3 py-2 rounded"
-                    >
-                      <option value="">Select Category</option>
-                      <option value="Pizzas">Pizzas</option>
-                      <option value="Burgers">Burgers</option>
-                      <option value="Drinks">Drinks</option>
-                      <option value="Sides">Sides</option>
-                    </Field>
+
+                    <div className="flex items-center gap-2">
+                      <Field
+                        name="category"
+                        as="select"
+                        className="w-full border px-3 py-2 rounded flex-1"
+                        onChange={(e) => {
+                          if (e.target.value === "add_category") {
+                            setCategoryModalOpen(true);
+                            setFieldValue("category", "");
+                          } else {
+                            setFieldValue("category", e.target.value);
+                          }
+                        }}
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat.name}>
+                            {cat.name}
+                          </option>
+                        ))}
+                        <option
+                          value="add_category"
+                          className="text-blue-600 font-semibold"
+                        >
+                          + Add New Category
+                        </option>
+                      </Field>
+                    </div>
+
                     <Field
                       name="price"
                       type="number"
@@ -425,6 +457,88 @@ const Menus = () => {
                 />
               </div>
             )}
+          </div>
+        )}
+
+        {categoryModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-[600px] shadow-lg max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-bold mb-4">Create New Category</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Category Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newCategory.name}
+                    onChange={(e) =>
+                      setNewCategory({ ...newCategory, name: e.target.value })
+                    }
+                    className="w-full border px-3 py-2 rounded"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Addons</h3>
+                  {newCategory.addons.map((addon, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 mb-2 p-2 bg-gray-100 rounded"
+                    >
+                      <span className="flex-1">
+                        {addon.name} (${addon.priceModifier})
+                      </span>
+                      <span>{addon.isMultiple ? "Multiple" : "Single"}</span>
+                      <button
+                        onClick={() => removeAddonFromCategory(index)}
+                        className="text-red-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="border-t pt-3 mt-3">
+                    <h4 className="font-medium mb-2">Add New Addon</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <input
+                        type="text"
+                        value={newAddon.name}
+                        onChange={(e) =>
+                          setNewAddon({ ...newAddon, name: e.target.value })
+                        }
+                        placeholder="Addon Name"
+                        className="border px-2 py-1 rounded col-span-2"
+                      />
+                    </div>
+                    <div className="flex items-center mt-2">
+                      <button
+                        onClick={addAddonToCategory}
+                        className="ml-auto bg-green-500 text-white px-3 py-1 rounded text-sm"
+                      >
+                        + Add Addon
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => setCategoryModalOpen(false)}
+                    className="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateCategory}
+                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Save Category
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
