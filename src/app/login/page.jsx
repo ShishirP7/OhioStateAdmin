@@ -38,7 +38,7 @@ const LoginForm = () => {
       localStorage.setItem('authToken', result.token);
       
       // Redirect to dashboard or home page
-      router.push('/dash');
+      router.push('/');
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {

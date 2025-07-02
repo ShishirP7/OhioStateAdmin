@@ -124,18 +124,11 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Main Content */}
-        {startupCheck ? (
           <>
             <main className="flex-1 overflow-y-auto p-6">{children}</main>
             <Toaster />
           </>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-screen">
-            <div>
-              <Lottie animationData={LoadingAnimation} loop={true} />
-            </div>
-          </div>
-        )}
+      
       </div>
     </div>
   );
