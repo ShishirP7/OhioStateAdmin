@@ -48,7 +48,7 @@ const AdminLayout = ({ children }) => {
   }, []);
 
   const links = [
-    { name: "Dashboard", href: "/dash" },
+    { name: "Dashboard", href: "/" },
     { name: "Stores", href: "/stores" },
     { name: "Menu", href: "/menus" },
     { name: "Combos", href: "/combos" },
@@ -74,19 +74,24 @@ const AdminLayout = ({ children }) => {
           🍕 Resto Admin
         </div>
         <nav className="flex flex-col mt-4 space-y-2 px-4">
-          {links.map((link, idx) => (
-            <Link
-              key={idx}
-              href={link.href}
-              className={`p-2 rounded transition-colors ${
-                pathname.startsWith(link.href)
-                  ? "bg-red-600 text-white"
-                  : "hover:bg-red-500"
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
+          {links.map((link, idx) => {
+            const isActive =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href);
+
+            return (
+              <Link
+                key={idx}
+                href={link.href}
+                className={`p-2 rounded transition-colors ${
+                  isActive ? "bg-red-600 text-white" : "hover:bg-red-500"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
