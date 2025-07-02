@@ -36,7 +36,7 @@ const AdminLayout = ({ children }) => {
   }, []);
 
   const links = [
-    { name: "Dashboard", href: "/dashboard" },
+    { name: "Dashboard", href: "/dash" },
     { name: "Stores", href: "/stores" },
     { name: "Menu", href: "/menus" },
     { name: "Combos", href: "/combos" },
