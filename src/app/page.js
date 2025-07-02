@@ -8,7 +8,7 @@ export default function Home() {
   const router = useRouter();
 
   const apiUrl = process.env.REACT_APP_API_BASE_URL;
-  console.log(apiUrl)
+  console.log(apiUrl);
 
   useEffect(() => {
     // Check authentication status (you might want to use a more secure method)
@@ -35,11 +35,7 @@ export default function Home() {
 
   // Only render dashboard if authenticated
   if (isLogin) {
-    return (
-      <div>
-        <AdminLayout></AdminLayout>
-      </div>
-    );
+    router.push("/login");
   }
 
   // If not authenticated, the useEffect will handle the redirect
