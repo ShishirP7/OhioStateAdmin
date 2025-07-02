@@ -1,9 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-
+import Lottie from "lottie-react";
+import LoadingAnimation from "../../../Assets/Loading.json";
 import { Toaster } from "react-hot-toast";
 import axios from "axios";
 
@@ -11,6 +12,7 @@ const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [startupCheck, setStartUpCheck] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -25,8 +27,18 @@ const AdminLayout = ({ children }) => {
     window.location.href = "/login";
   };
   useEffect(() => {
-    axios
-      .get(`https://api.ohiostatepizzas.com/api/startup-check`)
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    const response = axios
+      .get("https://api.ohiostatepizzas.com/api/employees/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
       .then((res) => {
         setStartUpCheck(true);
       })
@@ -113,7 +125,11 @@ const AdminLayout = ({ children }) => {
             <Toaster />
           </>
         ) : (
-          "Loading"
+          <div className="flex flex-col items-center justify-center h-screen">
+            <div>
+              <Lottie animationData={LoadingAnimation} loop={true} />
+            </div>
+          </div>
         )}
       </div>
     </div>
