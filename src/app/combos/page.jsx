@@ -11,9 +11,7 @@ const Combos = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentCombo, setCurrentCombo] = useState(null);
-  const [comboItems, setComboItems] = useState([
-    { itemId: "", toppings: [{ name: "", extraPrice: 0 }] }
-  ]);
+  const [comboItems, setComboItems] = useState([{ item: null, options: {} }]);
   const [imageBase64, setImageBase64] = useState("");
 
   useEffect(() => {
@@ -34,13 +32,13 @@ const Combos = () => {
   const openModal = (combo = null) => {
     if (combo) {
       const mappedItems = combo.items.map((ci) => ({
-        itemId: ci.item?._id || ci.item,
-        toppings: ci.toppings || []
+        item: ci.item || null,
+        options: ci.options || {},
       }));
       setComboItems(mappedItems);
       setImageBase64(combo.image || "");
     } else {
-      setComboItems([{ itemId: "", toppings: [{ name: "", extraPrice: 0 }] }]);
+      setComboItems([{ item: null, options: {} }]);
       setImageBase64("");
     }
     setCurrentCombo(combo);
@@ -67,17 +65,17 @@ const Combos = () => {
     e.preventDefault();
     const form = e.target;
 
-   const newCombo = {
-  name: form.name.value,
-  description: form.description.value,
-  price: parseFloat(form.price.value),
-  isSpecial: true,
-  image: imageBase64,
-  items: comboItems.map((ci) => ({
-    item: ci.itemId,
-    toppings: ci.toppings.filter((t) => t.name.trim() !== "")
-  }))
-};
+    const newCombo = {
+      name: form.name.value,
+      description: form.description.value,
+      price: parseFloat(form.price.value),
+      isSpecial: true,
+      image: imageBase64,
+      items: comboItems.map((ci) => ({
+        item: ci.item,
+        options: ci.options || {},
+      })),
+    };
 
     try {
       if (currentCombo?._id) {
@@ -141,20 +139,6 @@ const Combos = () => {
                       <span className="font-semibold">
                         {ci.item?.name || "Unknown Item"}
                       </span>
-                      {ci.toppings?.length > 0 && (
-                        <ul className="ml-5 mt-1 list-circle text-xs text-gray-600">
-                          {ci.toppings.map((top, j) => (
-                            <li key={j}>
-                              {top.name}
-                              {top.extraPrice > 0 && (
-                                <span className="text-gray-500">
-                                  {" "}(+${top.extraPrice.toFixed(2)})
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
                     </li>
                   ))}
                 </ul>
@@ -226,10 +210,13 @@ const Combos = () => {
                 {comboItems.map((ci, index) => (
                   <div key={index} className="border p-3 rounded">
                     <select
-                      value={ci.itemId}
+                      value={ci.item?._id || ""}
                       onChange={(e) => {
+                        const selectedItem = menuItems.find(
+                          (mi) => mi._id === e.target.value
+                        );
                         const updated = [...comboItems];
-                        updated[index].itemId = e.target.value;
+                        updated[index].item = selectedItem || null;
                         setComboItems(updated);
                       }}
                       className="w-full border px-3 py-2 rounded mb-2"
@@ -241,55 +228,6 @@ const Combos = () => {
                         </option>
                       ))}
                     </select>
-
-                    {ci.toppings.map((top, tIdx) => (
-                      <div key={tIdx} className="flex gap-2 mb-1">
-                        <input
-                          placeholder="Topping name"
-                          value={top.name}
-                          onChange={(e) => {
-                            const updated = [...comboItems];
-                            updated[index].toppings[tIdx].name = e.target.value;
-                            setComboItems(updated);
-                          }}
-                          className="flex-1 border px-2 py-1 rounded"
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="Extra price"
-                          value={top.extraPrice}
-                          onChange={(e) => {
-                            const updated = [...comboItems];
-                            updated[index].toppings[tIdx].extraPrice = parseFloat(e.target.value || 0);
-                            setComboItems(updated);
-                          }}
-                          className="w-24 border px-2 py-1 rounded"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = [...comboItems];
-                            updated[index].toppings.splice(tIdx, 1);
-                            setComboItems(updated);
-                          }}
-                          className="text-red-500"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = [...comboItems];
-                        updated[index].toppings.push({ name: "", extraPrice: 0 });
-                        setComboItems(updated);
-                      }}
-                      className="text-blue-600 text-sm"
-                    >
-                      + Add Topping
-                    </button>
 
                     <button
                       type="button"
@@ -307,7 +245,7 @@ const Combos = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    setComboItems([...comboItems, { itemId: "", toppings: [] }])
+                    setComboItems([...comboItems, { item: null, options: {} }])
                   }
                   className="text-green-600 text-sm"
                 >
