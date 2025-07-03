@@ -322,7 +322,7 @@ const Orders = () => {
                   }`}
                 >
                   <td className="px-3 py-2 font-medium text-md">
-                    {order.id.substring(0, 8)}
+                    {order._id?.substring(0, 8)}
                   </td>
                   <td className="px-3 py-2">
                     {order.billingInfo.firstName} {order.billingInfo.lastName}
