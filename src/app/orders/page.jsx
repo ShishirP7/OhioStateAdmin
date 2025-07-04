@@ -109,13 +109,13 @@ const Orders = () => {
     const POLL_INTERVAL = 30000;
 
     const fetchOrders = () => {
+      const token = localStorage.getItem("authToken");
       axios
         .get("https://api.ohiostatepizzas.com/api/orders/", {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${token}`,
           },
         })
-        .get("https://api.ohiostatepizzas.com/api/orders/")
         .then((res) => {
           const fetchedOrders = res.data.data;
           const newIds = new Set(fetchedOrders.map((o) => o.id));
