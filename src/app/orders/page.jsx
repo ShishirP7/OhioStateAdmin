@@ -116,6 +116,7 @@ const Orders = () => {
             Authorization: `Bearer ${token}`,
           },
         })
+        
         .then((res) => {
           const fetchedOrders = res.data.data;
           const newIds = new Set(fetchedOrders.map((o) => o.id));
