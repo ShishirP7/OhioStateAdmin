@@ -122,7 +122,6 @@ const Orders = () => {
           const isNewOrder = [...newIds].some(
             (id) => !orderIdsRef.current.has(id)
           );
-
           setOrders(fetchedOrders);
           orderIdsRef.current = newIds;
 
