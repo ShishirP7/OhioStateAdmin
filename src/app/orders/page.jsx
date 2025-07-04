@@ -87,10 +87,11 @@ const Orders = () => {
 
   // Track visibility
   useEffect(() => {
-  const handleVisibility = () => setIsPageVisible(!document.hidden);
-  document.addEventListener("visibilitychange", handleVisibility);
-  return () => document.removeEventListener("visibilitychange", handleVisibility);
-}, []);
+    const handleVisibility = () => setIsPageVisible(!document.hidden);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   // Alarm loop
   useEffect(() => {
@@ -108,8 +109,13 @@ const Orders = () => {
     const POLL_INTERVAL = 30000;
 
     const fetchOrders = () => {
+      const token = localStorage.getItem("authToken");
       axios
-        .get("https://api.ohiostatepizzas.com/api/orders/")
+        .get("https://api.ohiostatepizzas.com/api/orders/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
         .then((res) => {
           const fetchedOrders = res.data.data;
           const newIds = new Set(fetchedOrders.map((o) => o.id));
@@ -246,7 +252,7 @@ const Orders = () => {
                 placeholder="Search something.."
               />
             </div>
-          </div>                    
+          </div>
           <div>
             <label
               htmlFor="pizzaType"
