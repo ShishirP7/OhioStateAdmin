@@ -129,7 +129,7 @@ const Receipt = ({ order }) => {
           <p className="legal">
             <strong>Thank you for your business!</strong> 
             <br />
-            Order ID: {id.substring(0, 8)}
+            Order ID: {id?.substring(0, 8)}
             <br />
             Order Time: {new Date(order.createdAt).toLocaleString()}
           </p>

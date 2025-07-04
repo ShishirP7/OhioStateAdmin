@@ -3,67 +3,20 @@ import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import Receipt from "../components/Recipt";
 import axios from "axios";
-import useSound from "use-sound"; // NEW
-
-// Sample data in the new format
-const pizzaOrders = {
-  data: [
-    {
-      billingInfo: {
-        firstName: "Emma",
-        lastName: "Wilson",
-        phone: "6145551234",
-        email: "emma.wilson@example.com",
-      },
-      carryoutInfo: {
-        timeOption: "asap",
-        address: "100 High Street, Columbus, OH 43215",
-      },
-      cartItems: [
-        {
-          name: "Medium Veggie Pizza",
-          quantity: 1,
-          totalPrice: 14.99,
-          selectedOptions: {
-            crust: "Thin",
-            toppings: ["Mushrooms", "Olives"],
-          },
-          items: [],
-        },
-      ],
-      paymentInfo: {
-        method: "Credit Card",
-        last4: "4242",
-      },
-      orderTotal: 14.99,
-      status: "pending",
-      createdAt: "2025-06-23T21:30:23.041Z",
-      updatedAt: "2025-06-23T21:30:23.041Z",
-      id: "6859c76f8ae6c28baff9140c",
-    },
-  ],
-  meta: {
-    total: 1,
-    page: 1,
-    limit: 10,
-    pages: 1,
-  },
-};
+import useSound from "use-sound";
 
 const getStatusStyle = (status) => {
   switch (status.toLowerCase()) {
     case "pending":
       return "bg-yellow-200 text-yellow-800";
     case "processing":
-    case "making":
+    case "cooking":
       return "bg-blue-200 text-blue-800";
     case "completed":
       return "bg-green-200 text-green-800";
     case "cancelled":
       return "bg-red-200 text-red-800";
-    case "packaging":
-      return "bg-purple-200 text-purple-800";
-    case "out for delivery":
+    case "delivery":
       return "bg-orange-200 text-orange-800";
     default:
       return "bg-gray-200 text-gray-800";
@@ -73,7 +26,7 @@ const getStatusStyle = (status) => {
 const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [orders, setOrders] = useState(pizzaOrders.data);
+  const [orders, setOrders] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [alarmActive, setAlarmActive] = useState(false);
   const [isPageVisible, setIsPageVisible] = useState(true);
@@ -85,7 +38,6 @@ const Orders = () => {
     { volume: 0.5 }
   );
 
-  // Track visibility
   useEffect(() => {
     const handleVisibility = () => setIsPageVisible(!document.hidden);
     document.addEventListener("visibilitychange", handleVisibility);
@@ -93,7 +45,6 @@ const Orders = () => {
       document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
-  // Alarm loop
   useEffect(() => {
     if (!alarmActive) return;
     const alarmInterval = setInterval(() => {
@@ -102,7 +53,6 @@ const Orders = () => {
     return () => clearInterval(alarmInterval);
   }, [alarmActive, playNotification]);
 
-  // Poll server every 30 seconds only if visible
   useEffect(() => {
     if (!isPageVisible) return;
 
@@ -116,10 +66,9 @@ const Orders = () => {
             Authorization: `Bearer ${token}`,
           },
         })
-        
         .then((res) => {
           const fetchedOrders = res.data.data;
-          const newIds = new Set(fetchedOrders.map((o) => o.id));
+          const newIds = new Set(fetchedOrders.map((o) => o._id));
           const isNewOrder = [...newIds].some(
             (id) => !orderIdsRef.current.has(id)
           );
@@ -174,13 +123,21 @@ const Orders = () => {
 
   const handleChange = async (newStatus) => {
     try {
+      const token = localStorage.getItem("authToken");
       await axios.put(
-        `https://api.ohiostatepizzas.com/api/orders/${selectedOrder.id}`,
-        { status: newStatus }
+        `https://api.ohiostatepizzas.com/api/orders/${selectedOrder._id}`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const updatedOrders = orders.map((order) =>
-        order.id === selectedOrder.id ? { ...order, status: newStatus } : order
+        order._id === selectedOrder._id
+          ? { ...order, status: newStatus }
+          : order
       );
       setOrders(updatedOrders);
       setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
@@ -207,11 +164,9 @@ const Orders = () => {
     switch (selectedOrder.status.toLowerCase()) {
       case "pending":
         return "New order received. Awaiting action.";
-      case "making":
+      case "cooking":
         return "The kitchen is preparing the order.";
-      case "packaging":
-        return "The order is ready and being packaged.";
-      case "out for delivery":
+      case "delivery":
         return "The order has left the restaurant for delivery.";
       case "completed":
         return "Order has been delivered successfully!";
@@ -267,7 +222,7 @@ const Orders = () => {
               <option value="">All</option>
               {Array.from(
                 new Set(
-                  orders.flatMap((order) =>
+                  orders?.flatMap((order) =>
                     order.cartItems.map((item) => item.name)
                   )
                 )
@@ -293,7 +248,8 @@ const Orders = () => {
               <option value="">All</option>
               <option value="pending">Pending</option>
               <option value="cooking">Making</option>
-              <option value="delivery">Out for Delivery</option>
+              <option value="packaging">Packaging</option>
+              <option value="out for delivery">Out for Delivery</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
@@ -312,12 +268,12 @@ const Orders = () => {
                 <th className="p-3">Product Name</th>
                 <th className="p-3">Quantity</th>
                 <th className="p-3">Price ($)</th>
-                <th className="p-3">Delivery Address</th>
+                <th className="p-3">Pickup/Delivery</th>
                 <th className="p-3">Status</th>
               </tr>
             </thead>
             <tbody className="border-b dark:bg-gray-50 text-black dark:border-gray-300">
-              {orders.map((order, index) => (
+              {orders?.map((order, index) => (
                 <tr
                   key={index}
                   onClick={() => handleRowClick(order)}
@@ -331,7 +287,7 @@ const Orders = () => {
                     {order._id?.substring(0, 8)}
                   </td>
                   <td className="px-3 py-2">
-                    {order.billingInfo.firstName} {order.billingInfo.lastName}
+                    {order.billingInfo?.firstName} {order.billingInfo?.lastName}
                   </td>
                   <td className="px-3 py-2">
                     {order.cartItems.map((item) => item.name).join(", ")}
@@ -342,8 +298,10 @@ const Orders = () => {
                       0
                     )}
                   </td>
-                  <td className="px-3 py-2">${order.orderTotal.toFixed(2)}</td>
-                  <td className="px-3 py-2">{order.carryoutInfo.address}</td>
+                  <td className="px-3 py-2">${order.orderTotal?.toFixed(2)}</td>
+                  <td className="px-3 py-2">
+                    {order.serviceType === "Carryout" ? "Carryout" : "Delivery"}
+                  </td>
                   <td className="px-3 py-2">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
@@ -403,9 +361,9 @@ const Orders = () => {
                       {[
                         "pending",
                         "cooking",
-                        "cancelled",
-                        "out for delivery",
+                        "delivery",
                         "completed",
+                        "cancelled",
                       ].map((item) => (
                         <button
                           key={item}
@@ -432,7 +390,7 @@ const Orders = () => {
               </div>
 
               <h2 className="text-2xl mt-5 font-semibold text-center mb-4">
-                {statusMessage()} {selectedOrder.id.substring(0, 8)}!
+                {statusMessage()} {selectedOrder?._id?.substring(0, 8)}!
               </h2>
 
               <div className="space-y-4 text-sm sm:text-base">
@@ -441,7 +399,8 @@ const Orders = () => {
                     Customer Details
                   </h3>
                   <p>
-                    <strong>Name:</strong> {selectedOrder.billingInfo.firstName}{" "}
+                    <strong>Name:</strong>{" "}
+                    {selectedOrder.billingInfo?.firstName}{" "}
                     {selectedOrder?.billingInfo?.lastName}
                   </p>
                   <p>
@@ -451,9 +410,20 @@ const Orders = () => {
                     <strong>Email:</strong> {selectedOrder?.billingInfo?.email}
                   </p>
                   <p>
-                    <strong>Address:</strong>{" "}
-                    {selectedOrder?.carryoutInfo?.address}
+                    <strong>Service Type:</strong> {selectedOrder?.serviceType}
                   </p>
+                  {selectedOrder?.carryoutInfo?.address && (
+                    <p>
+                      <strong>Address:</strong>{" "}
+                      {selectedOrder?.carryoutInfo?.address}
+                    </p>
+                  )}
+                  {selectedOrder?.carryoutInfo?.scheduledTime && (
+                    <p>
+                      <strong>Scheduled Time:</strong>{" "}
+                      {selectedOrder?.carryoutInfo?.scheduledTime}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -466,17 +436,25 @@ const Orders = () => {
                         <strong>Item:</strong> {item.name} ×{item?.quantity}
                       </p>
                       <p>
-                        <strong>Price:</strong> ${item.totalPrice.toFixed(2)}
+                        <strong>Price:</strong> ${item.totalPrice?.toFixed(2)}
                       </p>
-                      <p>
-                        <strong>Crust:</strong> {item.selectedOptions.crust}
-                      </p>
-                      {item.selectedOptions.toppings &&
-                        item.selectedOptions.toppings.length > 0 && (
-                          <p>
-                            <strong>Toppings:</strong>{" "}
-                            {item.selectedOptions.toppings.join(", ")}
-                          </p>
+                      {item.selectedOptions &&
+                        Object.keys(item.selectedOptions).length > 0 && (
+                          <>
+                            {item.selectedOptions.crust && (
+                              <p>
+                                <strong>Crust:</strong>{" "}
+                                {item.selectedOptions.crust}
+                              </p>
+                            )}
+                            {item.selectedOptions.toppings &&
+                              item.selectedOptions.toppings.length > 0 && (
+                                <p>
+                                  <strong>Toppings:</strong>{" "}
+                                  {item.selectedOptions.toppings.join(", ")}
+                                </p>
+                              )}
+                          </>
                         )}
                     </div>
                   ))}
@@ -487,18 +465,17 @@ const Orders = () => {
                     Payment Summary
                   </h3>
                   <p>
-                    <strong>Method:</strong> {selectedOrder.paymentInfo.method}
-                    {selectedOrder.paymentInfo.last4 &&
-                      ` (•••• ${selectedOrder.paymentInfo.last4})`}
+                    <strong>Method:</strong> {selectedOrder.paymentInfo?.method}
                   </p>
                   <p>
                     <strong>Total Amount:</strong> $
-                    {selectedOrder.orderTotal.toFixed(2)}
+                    {selectedOrder.orderTotal?.toFixed(2)}
                   </p>
                 </div>
 
                 <div className="text-center text-sm text-gray-600 mt-4 text-red-600">
-                  Order ID: <strong>{selectedOrder.id.substring(0, 8)}</strong>
+                  Order ID:{" "}
+                  <strong>{selectedOrder?._id?.substring(0, 8)}</strong>
                   <br />
                   Order Time:{" "}
                   <strong>
