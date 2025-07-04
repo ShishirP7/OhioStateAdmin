@@ -87,10 +87,11 @@ const Orders = () => {
 
   // Track visibility
   useEffect(() => {
-  const handleVisibility = () => setIsPageVisible(!document.hidden);
-  document.addEventListener("visibilitychange", handleVisibility);
-  return () => document.removeEventListener("visibilitychange", handleVisibility);
-}, []);
+    const handleVisibility = () => setIsPageVisible(!document.hidden);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   // Alarm loop
   useEffect(() => {
@@ -109,6 +110,11 @@ const Orders = () => {
 
     const fetchOrders = () => {
       axios
+        .get("https://api.ohiostatepizzas.com/api/orders/", {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
         .get("https://api.ohiostatepizzas.com/api/orders/")
         .then((res) => {
           const fetchedOrders = res.data.data;
@@ -246,7 +252,7 @@ const Orders = () => {
                 placeholder="Search something.."
               />
             </div>
-          </div>                    
+          </div>
           <div>
             <label
               htmlFor="pizzaType"
