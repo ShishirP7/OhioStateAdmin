@@ -5,13 +5,14 @@ import axios from "axios";
 
 const API_URL = "https://api.ohiostatepizzas.com/api/specials";
 const MENU_API_URL = "https://api.ohiostatepizzas.com/api/menuitems";
-
 const Combos = () => {
   const [combos, setCombos] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentCombo, setCurrentCombo] = useState(null);
-  const [comboItems, setComboItems] = useState([{ item: null, options: {} }]);
+  const [comboItems, setComboItems] = useState([
+    { itemId: "", toppings: [{ name: "", extraPrice: 0 }] },
+  ]);
   const [imageBase64, setImageBase64] = useState("");
 
   useEffect(() => {
@@ -32,13 +33,13 @@ const Combos = () => {
   const openModal = (combo = null) => {
     if (combo) {
       const mappedItems = combo.items.map((ci) => ({
-        item: ci.item || null,
-        options: ci.options || {},
+        itemId: ci.item?._id || ci.item,
+        toppings: ci.toppings || [],
       }));
       setComboItems(mappedItems);
       setImageBase64(combo.image || "");
     } else {
-      setComboItems([{ item: null, options: {} }]);
+      setComboItems([{ itemId: "", toppings: [{ name: "", extraPrice: 0 }] }]);
       setImageBase64("");
     }
     setCurrentCombo(combo);
@@ -72,8 +73,8 @@ const Combos = () => {
       isSpecial: true,
       image: imageBase64,
       items: comboItems.map((ci) => ({
-        item: ci.item,
-        options: ci.options || {},
+        item: ci.itemId,
+        toppings: ci.toppings.filter((t) => t.name.trim() !== ""),
       })),
     };
 
@@ -118,11 +119,15 @@ const Combos = () => {
             >
               {combo.image && (
                 <img
-                  src={combo.image.startsWith("data") ? combo.image : `data:image/jpeg;base64,${combo.image}`}
+                  src={
+                    combo.image.startsWith("data:")
+                      ? combo.image
+                      : `data:image/jpeg;base64,${combo.image}`
+                  }
                   alt="combo"
                   className="w-full h-40 object-cover rounded mb-3"
                 />
-              )}
+              )}  
               <h3 className="text-xl font-semibold text-gray-800">
                 {combo.name}
               </h3>
@@ -139,6 +144,21 @@ const Combos = () => {
                       <span className="font-semibold">
                         {ci.item?.name || "Unknown Item"}
                       </span>
+                      {ci.toppings?.length > 0 && (
+                        <ul className="ml-5 mt-1 list-circle text-xs text-gray-600">
+                          {ci.toppings.map((top, j) => (
+                            <li key={j}>
+                              {top.name}
+                              {top.extraPrice > 0 && (
+                                <span className="text-gray-500">
+                                  {" "}
+                                  (+${top.extraPrice.toFixed(2)})
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -210,13 +230,10 @@ const Combos = () => {
                 {comboItems.map((ci, index) => (
                   <div key={index} className="border p-3 rounded">
                     <select
-                      value={ci.item?._id || ""}
+                      value={ci.itemId}
                       onChange={(e) => {
-                        const selectedItem = menuItems.find(
-                          (mi) => mi._id === e.target.value
-                        );
                         const updated = [...comboItems];
-                        updated[index].item = selectedItem || null;
+                        updated[index].itemId = e.target.value;
                         setComboItems(updated);
                       }}
                       className="w-full border px-3 py-2 rounded mb-2"
@@ -228,6 +245,59 @@ const Combos = () => {
                         </option>
                       ))}
                     </select>
+
+                    {ci.toppings.map((top, tIdx) => (
+                      <div key={tIdx} className="flex gap-2 mb-1">
+                        <input
+                          placeholder="Topping name"
+                          value={top.name}
+                          onChange={(e) => {
+                            const updated = [...comboItems];
+                            updated[index].toppings[tIdx].name = e.target.value;
+                            setComboItems(updated);
+                          }}
+                          className="flex-1 border px-2 py-1 rounded"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Extra price"
+                          value={top.extraPrice}
+                          onChange={(e) => {
+                            const updated = [...comboItems];
+                            updated[index].toppings[tIdx].extraPrice =
+                              parseFloat(e.target.value || 0);
+                            setComboItems(updated);
+                          }}
+                          className="w-24 border px-2 py-1 rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...comboItems];
+                            updated[index].toppings.splice(tIdx, 1);
+                            setComboItems(updated);
+                          }}
+                          className="text-red-500"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...comboItems];
+                        updated[index].toppings.push({
+                          name: "",
+                          extraPrice: 0,
+                        });
+                        setComboItems(updated);
+                      }}
+                      className="text-blue-600 text-sm"
+                    >
+                      + Add Topping
+                    </button>
 
                     <button
                       type="button"
@@ -245,7 +315,7 @@ const Combos = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    setComboItems([...comboItems, { item: null, options: {} }])
+                    setComboItems([...comboItems, { itemId: "", toppings: [] }])
                   }
                   className="text-green-600 text-sm"
                 >
