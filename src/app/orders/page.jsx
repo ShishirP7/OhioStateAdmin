@@ -515,19 +515,28 @@ const Orders = () => {
                       {item.selectedOptions &&
                         Object.keys(item.selectedOptions).length > 0 && (
                           <>
-                            {item.selectedOptions.crust && (
-                              <p>
-                                <strong>Crust:</strong>{" "}
-                                {item.selectedOptions.crust}
-                              </p>
+                            {Object.entries(item.selectedOptions).map(
+                              ([key, value]) => {
+                                if (
+                                  !value ||
+                                  (Array.isArray(value) && value.length === 0)
+                                )
+                                  return null;
+
+                                return (
+                                  <p key={key}>
+                                    <strong>
+                                      {key.charAt(0).toUpperCase() +
+                                        key.slice(1)}
+                                      :
+                                    </strong>{" "}
+                                    {Array.isArray(value)
+                                      ? value.join(", ")
+                                      : value}
+                                  </p>
+                                );
+                              }
                             )}
-                            {item.selectedOptions.toppings &&
-                              item.selectedOptions.toppings.length > 0 && (
-                                <p>
-                                  <strong>Toppings:</strong>{" "}
-                                  {item.selectedOptions.toppings.join(", ")}
-                                </p>
-                              )}
                           </>
                         )}
                     </div>
