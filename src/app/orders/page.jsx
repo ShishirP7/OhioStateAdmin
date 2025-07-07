@@ -53,6 +53,8 @@ const Orders = () => {
     return () => clearInterval(alarmInterval);
   }, [alarmActive, playNotification]);
 
+
+
   useEffect(() => {
     if (!isPageVisible) return;
 
@@ -260,19 +262,19 @@ const Orders = () => {
           Pizza Orders
         </h2>
         <div className="overflow-x-auto rounded-lg">
-          <table className="w-full p-6 text-sm text-left whitespace-nowrap">
+          <table className="w-full p-6 text-sm text-left whitespace-nowrap ">
             <thead>
-              <tr className="dark:bg-red-600">
-                <th className="p-3">Order ID</th>
-                <th className="p-3">Customer</th>
-                <th className="p-3">Product Name</th>
-                <th className="p-3">Quantity</th>
-                <th className="p-3">Price ($)</th>
-                <th className="p-3">Pickup/Delivery</th>
-                <th className="p-3">Status</th>
+              <tr className="bg-red-600 text-red-700 text-white">
+                <th className="p-3 ">Order ID</th>
+                <th className="p-3 ">Customer</th>
+                <th className="p-3 ">Product Name</th>
+                <th className="p-3 ">Quantity</th>
+                <th className="p-3 ">Price ($)</th>
+                <th className="p-3 ">Pickup/Delivery</th>
+                <th className="p-3 ">Status</th>
               </tr>
             </thead>
-            <tbody className="border-b dark:bg-gray-50 text-black dark:border-gray-300">
+            <tbody className="dark:bg-gray-100 text-black">
               {orders?.map((order, index) => (
                 <tr
                   key={index}
