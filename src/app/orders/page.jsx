@@ -53,8 +53,6 @@ const Orders = () => {
     return () => clearInterval(alarmInterval);
   }, [alarmActive, playNotification]);
 
-
-
   useEffect(() => {
     if (!isPageVisible) return;
 
@@ -100,25 +98,99 @@ const Orders = () => {
     const printContents = printRef.current.innerHTML;
     const win = window.open("", "", "width=380,height=600");
     win.document.write(`
-      <html>
-        <head>
-          <title>Print Receipt</title>
-          <style>
-            @media print {
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { width: 80mm; font-family: monospace; font-size: 12px; background: #fff; }
-              #invoice-POS { width: 80mm; padding: 0; margin: 0 auto; margin-top:-20px; }
-              h2, h3, p { margin: 0; padding: 2px 0; text-align: center; }
-              table { width: 100%; border-collapse: collapse; }
-              td { padding: 4px 0; text-align: left; }
-              .legal { font-size: 10px; margin-top: 8px; text-align: center; }
-            }
-          </style>
-        </head>
-        <body onload="window.print(); window.close();">
-          ${printContents}
-        </body>
-      </html>
+     <html>
+  <head>
+    <title>Print Receipt</title>
+    <style>
+      @media print {
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        html, body {
+          width: 80mm;
+          background: #fff;
+          font-family: monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+        }
+
+        body {
+          margin: 0 auto;
+        }
+
+        #invoice-POS {
+          width: 80mm;
+          margin: 0 auto;
+        }
+
+        h2,
+        h3 {
+          font-size: 16px;
+          font-weight: bold;
+          text-align: center;
+          margin: 4px 0;
+        }
+
+        p {
+          font-size: 12px;
+          text-align: center;
+          margin: 2px 0;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 8px;
+        }
+
+        th, td {
+          font-size: 12px;
+          padding: 4px 0;
+          text-align: left;
+        }
+
+        th {
+          border-bottom: 1px solid #000;
+        }
+
+        .right {
+          text-align: right;
+        }
+
+        .center {
+          text-align: center;
+        }
+
+        .legal {
+          font-size: 10px;
+          text-align: center;
+          margin-top: 10px;
+        }
+
+        @page {
+          size: 80mm auto;
+          margin: 0;
+        }
+
+        .logo {
+          display: block;
+          margin: 0 auto 6px;
+          height: 60px;
+          width: 60px;
+        }
+      }
+    </style>
+  </head>
+
+  <body onload="window.print(); window.close();">
+    ${printContents}
+  </body>
+</html>
+
     `);
     win.document.close();
   };
