@@ -29,7 +29,7 @@ const Receipt = ({ order }) => {
         />
         <h2 className="text-base font-bold uppercase">Ohio State Pizza</h2>
         <p className="text-[10px]">
-          123 Buckeye St, Columbus, OH 43210
+          819 North Nelson Road, Columbus, OH 43219
           <br />
           (614) 555-1234
         </p>
