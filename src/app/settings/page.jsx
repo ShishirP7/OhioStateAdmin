@@ -35,7 +35,7 @@ const Settings = () => {
       const token = localStorage.getItem("authToken");
 
       const res = await axios.patch(
-        "http://localhost:4001/api/employees/reset-password", // Update path if needed
+        "https://api.ohiostatepizzas.com/api/employees/reset-password", // Update path if needed
         {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,
