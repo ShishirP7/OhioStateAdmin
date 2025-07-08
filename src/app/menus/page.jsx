@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import axios from "axios";
 import { FiDelete, FiEdit } from "react-icons/fi";
 import RouteGuard from "../RouteGuard";
+import toast from "react-hot-toast";
 
 const API_URL = "https://api.ohiostatepizzas.com/api/menuitems/";
 const STORES_URL = "https://api.ohiostatepizzas.com/api/stores";
@@ -97,6 +98,7 @@ const Menus = () => {
       setMenus(res.data);
     } catch (err) {
       console.error("Failed to fetch menu items", err);
+      toast.error("Failed to fetch menu items");
     }
   };
 
@@ -106,6 +108,7 @@ const Menus = () => {
       setStores(res.data);
     } catch (err) {
       console.error("Failed to fetch stores", err);
+      toast.error("Failed to fetch stores");
     }
   };
 
@@ -148,13 +151,16 @@ const Menus = () => {
     try {
       if (currentItem?._id) {
         await axios.put(`${API_URL}${currentItem._id}`, values);
+        toast.success("Menu item updated");
       } else {
         await axios.post(API_URL, values);
+        toast.success("Menu item created");
       }
       fetchMenus();
-      closeModal();
+      setModalOpen(false);
     } catch (error) {
       console.error("Error saving menu item:", error);
+      toast.error("Failed to save menu item");
     }
   };
 
@@ -162,8 +168,10 @@ const Menus = () => {
     try {
       await axios.delete(`${API_URL}${id}`);
       fetchMenus();
+      toast.success("Menu item deleted");
     } catch (error) {
       console.error("Error deleting menu item:", error);
+      toast.error("Failed to delete menu item");
     }
   };
 
@@ -177,6 +185,7 @@ const Menus = () => {
       setNewCategory({ name: "", addons: [] });
       setCategoryModalOpen(false);
       fetchCategories();
+      toast.success("Categories added successfully");
     } catch (error) {
       console.error("Error creating category:", error);
       alert("Error creating category. Please try again.");
@@ -206,6 +215,7 @@ const Menus = () => {
       setNewCategory({ name: "", addons: [] });
       setCategoryModalOpen(false);
       fetchCategories();
+      toast.success("Categories updated successfully");
     } catch (error) {
       console.error("Error updating category:", error);
       alert("Error updating category. Please try again.");

@@ -3,8 +3,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../components/adminLayouts";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import Lottie from "lottie-react";
-import NotAuth from "../../../Assets/NotAuth.json";
+
 import {
   FiEdit,
   FiTrash2,
@@ -124,6 +123,7 @@ const Stores = () => {
       );
       setUserData(res.data);
     } catch (err) {
+      toast.error("Failed to fetch user profile");
       console.error(err);
     }
   };
@@ -169,6 +169,7 @@ const Stores = () => {
       password: "", // Don't show existing password
     });
     setIsModalOpen(true);
+    toast("Edit mode enabled", { icon: "✏️" });
   };
 
   const handleDeleteStore = async (id) => {

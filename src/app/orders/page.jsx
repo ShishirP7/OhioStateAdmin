@@ -4,7 +4,9 @@ import AdminLayout from "../components/adminLayouts";
 import Receipt from "../components/Recipt";
 import axios from "axios";
 import useSound from "use-sound";
+import toast, { Toaster } from "react-hot-toast";
 
+// Status badge color helper
 const getStatusStyle = (status) => {
   switch (status.toLowerCase()) {
     case "pending":
@@ -56,7 +58,7 @@ const Orders = () => {
   useEffect(() => {
     if (!isPageVisible) return;
 
-    const POLL_INTERVAL = 30000;
+    const POLL_INTERVAL = 15000;
 
     const fetchOrders = () => {
       const token = localStorage.getItem("authToken");
@@ -82,6 +84,12 @@ const Orders = () => {
 
           if (isNewOrder && hasPending) {
             playNotification();
+            toast.success("🆕 New order received!", {
+              style: {
+                background: "#333",
+                color: "#fff",
+              },
+            });
           }
         })
         .catch((err) => {
@@ -98,99 +106,26 @@ const Orders = () => {
     const printContents = printRef.current.innerHTML;
     const win = window.open("", "", "width=380,height=600");
     win.document.write(`
-     <html>
-  <head>
-    <title>Print Receipt</title>
-    <style>
-      @media print {
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
+      <html><head><title>Print Receipt</title>
+      <style>
+        @media print {
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body { width: 80mm; background: #fff; font-family: monospace; font-size: 12px; line-height: 1.4; color: #000; margin: 0 auto; }
+          #invoice-POS { width: 80mm; margin: 0 auto; }
+          h2, h3 { font-size: 16px; font-weight: bold; text-align: center; margin: 4px 0; }
+          p { font-size: 12px; text-align: center; margin: 2px 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th, td { font-size: 12px; padding: 4px 0; text-align: left; }
+          th { border-bottom: 1px solid #000; }
+          .right { text-align: right; }
+          .center { text-align: center; }
+          .legal { font-size: 10px; text-align: center; margin-top: 10px; }
+          @page { size: 80mm auto; margin: 0; }
+          .logo { display: block; margin: 0 auto 6px; height: 60px; width: 60px; }
         }
-
-        html, body {
-          width: 80mm;
-          background: #fff;
-          font-family: monospace;
-          font-size: 12px;
-          line-height: 1.4;
-          color: #000;
-        }
-
-        body {
-          margin: 0 auto;
-        }
-
-        #invoice-POS {
-          width: 80mm;
-          margin: 0 auto;
-        }
-
-        h2,
-        h3 {
-          font-size: 16px;
-          font-weight: bold;
-          text-align: center;
-          margin: 4px 0;
-        }
-
-        p {
-          font-size: 12px;
-          text-align: center;
-          margin: 2px 0;
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 8px;
-        }
-
-        th, td {
-          font-size: 12px;
-          padding: 4px 0;
-          text-align: left;
-        }
-
-        th {
-          border-bottom: 1px solid #000;
-        }
-
-        .right {
-          text-align: right;
-        }
-
-        .center {
-          text-align: center;
-        }
-
-        .legal {
-          font-size: 10px;
-          text-align: center;
-          margin-top: 10px;
-        }
-
-        @page {
-          size: 80mm auto;
-          margin: 0;
-        }
-
-        .logo {
-          display: block;
-          margin: 0 auto 6px;
-          height: 60px;
-          width: 60px;
-        }
-      }
-    </style>
-  </head>
-
-  <body onload="window.print(); window.close();">
-    ${printContents}
-  </body>
-</html>
-
+      </style></head>
+      <body onload="window.print(); window.close();">${printContents}</body>
+      </html>
     `);
     win.document.close();
   };
@@ -220,10 +155,20 @@ const Orders = () => {
         (order) => order.status.toLowerCase() === "pending"
       );
       setAlarmActive(hasPending);
+
+      toast.success("Order status updated", {
+        style: {
+          background: "#1e293b",
+          color: "#fff",
+        },
+      });
     } catch (err) {
       console.error("Failed to update status:", err);
+      toast.error("❌ Failed to update order", {
+        style: { background: "#1e293b", color: "#fff" },
+      });
     }
-    setIsOpen(false);
+    setShowModal(false)
   };
 
   const handleRowClick = (order) => {
@@ -253,6 +198,7 @@ const Orders = () => {
 
   return (
     <AdminLayout>
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="container p-2 mx-auto sm:p-4 text-white">
         {/* Filter section */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
